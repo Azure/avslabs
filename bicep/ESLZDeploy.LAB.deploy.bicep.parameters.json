@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "NumberOfAVSInstances": {
+            "value": 1
+        },
+        "NumberOfNestedLabsInAVS":{
+            "value": 6
+        },
+        "Prefix": {
+            "value": "GPSUS-TESTX"
+        },
+        "Location": {
+            "value": "brazilsouth"
+        },
+        "AlertEmails": {
+            "value": [
+                "husam.hilal@microsoft.com"
+            ]
+        },
+        "JumpboxSku": {
+            "value": "Standard_D2ds_v5"
+        },
+        "Bootstrap": {
+            "value": true
+        },
+        "BootstrapPath": {
+            "value": "https://gpsusstoragepremium.blob.core.windows.net/avs-embedded-labs/bootstrap.ps1"
+        },
+        "ESLZTemplate": {
+            "value": "https://raw.githubusercontent.com/husamhilal/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/ARM/ESLZDeploy.deploy.json"
+        }
+    }
+}
