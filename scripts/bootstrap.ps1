@@ -69,6 +69,8 @@ function Install-Applications {
     #Optional
     #choco install vscode -y
     #choco install microsoftazurestorageexplorer -y
+
+    #refreshenv
 }
 
 function Get-BootstrapScript {
