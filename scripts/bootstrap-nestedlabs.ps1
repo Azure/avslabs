@@ -156,10 +156,10 @@ function Set-NestedLabRequirement {
     Start-Sleep -Seconds 30
 
     # Install YAML PowerShell Module
-    $result = (Get-Module -ListAvailable -Name powershell-yaml) ? $true : (Install-Module powershell-yaml -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
+    # $result = (Get-Module -ListAvailable -Name powershell-yaml) ? $true : (Install-Module powershell-yaml -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
 
-    # Verification 
-    $result = (Get-Module -ListAvailable -Name powershell-yaml) ? $true : $false
+    # Extra Verification 
+    $result = (Get-Module -ListAvailable -Name VMware.PowerCLI) ? $true : $false
 
     return $result
 }
@@ -170,15 +170,16 @@ function Set-NestedLabPackage {
     $ZipPath = $TempPath + "\avs-embedded-labs-auto.zip"
     
     if (Test-Path $ExtractionPath -PathType Container) {
+        Write-Log "|--Set-NestedLabPackage - Directory already exists"
         return $true
     }
 
     if (Test-Path $ZipPath -PathType Leaf) {
         #Extract zip file using 7zip
         Set-Location $TempPath
-        7z x $ZipPath -o*
 
-        #Remove-Item $ExtractionPath\nestedlabs.yml -ErrorAction Continue
+        Write-Log "|--Set-NestedLabPackage - Extracting '$ZipPath'"
+        7z x $ZipPath -o*
 
         return (Test-Path $ExtractionPath)
     }
@@ -189,8 +190,8 @@ function Set-NestedLabPackage {
 }
 
 
-function Set-NestedLabConfigurations {
-    # This script block grabs AVS credentials and store them in YAML file that is required to run the nested lab deployment script.
+function Get-NestedLabConfigurations {
+    # This script block grabs AVS credentials and store them in a variable that is required to run the nested lab deployment script.
     # It uses a Managed Identity of the Jumpbox VM that has Contributor access over AVS Private Cloud
 
     Set-Location $ExtractionPath
@@ -220,12 +221,16 @@ function Set-NestedLabConfigurations {
     $nsxtIP = $nsxtURL.Substring(8)
     $nsxtIP = $nsxtIP.Substring(0, $nsxtIP.Length - 1)
 
-    $configs = @{"AVSvCenter" = @{"URL" = $vcsaIP; "Username" = $credsJson.vcenterUsername; "Password" = $credsJson.vcenterPassword }; "AVSNSXT" = @{"Host" = $nsxtIP; "Username" = $credsJson.nsxtUsername; "Password" = $credsJson.nsxtPassword } }
-    ConvertTo-Yaml $configs -OutFile $ExtractionPath\nestedlabs.yml -Force
-    #$configs | Out-File -FilePath .\nestedlabs.yml
+    $configs = @{"AVSvCenter" = @{"IP" = $vcsaIP; "Username" = $credsJson.vcenterUsername; "Password" = $credsJson.vcenterPassword }; "AVSNSXT" = @{"IP" = $nsxtIP; "Username" = $credsJson.nsxtUsername; "Password" = $credsJson.nsxtPassword } }
+    
+    Write-Log "|--Get-NestedLabConfigurations - Grabbed AVS Credentials"
+    
+    #$configs = @{"AVSvCenter" = @{"URL" = $vcsaIP; "Username" = $credsJson.vcenterUsername; "Password" = $credsJson.vcenterPassword }; "AVSNSXT" = @{"Host" = $nsxtIP; "Username" = $credsJson.nsxtUsername; "Password" = $credsJson.nsxtPassword } }
+    #ConvertTo-Yaml $configs -OutFile $ExtractionPath\nestedlabs.yml -Force
+    ##$configs | Out-File -FilePath .\nestedlabs.yml
 
-    return (Test-Path $ExtractionPath\nestedlabs.yml)
-
+    #return (Test-Path $ExtractionPath\nestedlabs.yml)
+    return $configs
 }
 
 function Enable-AVSPrivateCloudInternetViaSNAT {
@@ -286,7 +291,11 @@ function Build-NestedLab {
         [Parameter(Mandatory)]
         [ValidateRange(1, 32)]
         [Int]
-        $NumberOfNestedLabs
+        $NumberOfNestedLabs,
+        
+        [Parameter()]
+        [hashtable]
+        $AVSInfo
     )
 
     Set-Location $ExtractionPath
@@ -300,7 +309,7 @@ function Build-NestedLab {
     for ($i = 1; $i -le $NumberOfNestedLabs; $i++) {
         #Start-Process -Wait -FilePath PWSH.exe -WorkingDirectory $ExtractionPath -ArgumentList "-ExecutionPolicy Unrestricted -NonInteractive -NoProfile -WindowStyle Hidden", "-Command .\labdeploy.ps1 -group $groupNumber -lab $i -automated"
         Write-Log "|--Build-NestedLab - Started building Nested Lab #$i "
-        .\labdeploy.ps1 -group $GroupNumber -lab $i -automated
+        .\labdeploy.ps1 -group $GroupNumber -lab $i -automated -AVSInfo $AVSInfo
         Write-Log "|--Build-NestedLab - Done building Nested Lab #$i "
     }
     
@@ -324,21 +333,22 @@ Write-Log " "
 Write-Log "#---===---===---===---===---===---===---===---===---===---===---===---===---===---#"
 Write-Log "Starting Execution"
 
-Write-Log "Setting basic requirements for labdeploy.ps1 script (i.e.: installing PowerShell modules: VMware.PowerCLI and powershell-yaml)"
+Write-Log "Setting basic requirements for labdeploy.ps1 script (i.e.: installing PowerShell modules: VMware.PowerCLI)"
 if (Set-NestedLabRequirement) {
     Write-Log "Extracting nested labs Zip package"
     if (Set-NestedLabPackage) {
         Write-Log "Validation authentication to AVS from Jumpbox VM (i.e.: making sure Jumpbox VM managed identity has contributor permission over AVS Private Cloud resource)"
         if (Test-AuthenticationToAVS) {
-            Write-Log "Creating YAML configuration file that is required by labdeploy.ps1 script"
-            if (Set-NestedLabConfigurations) {
+            Write-Log "Getting AVS credentials information that is required by labdeploy.ps1 script"
+            $AVSInfo = Get-NestedLabConfigurations
+            if ($AVSInfo.Count -eq 2) {
                 Write-Log "Checking if AVS provisioning state is 'Succeeded' (i.e. making sure AVS is ready for next steps)"
                 if (Test-AVSReadiness) {
                     Write-Log "Enabling outbound Internet access from AVS which is required by labdeploy.ps1 script"
                     if (Enable-AVSPrivateCloudInternetViaSNAT) {
                         # $NumberOfNestedLabs = 6
                         Write-Log "Executing labdeploy.ps1 script for building $NumberOfNestedLabs nested VMware vSphere labs inside AVS Private Cloud"
-                        Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs
+                        Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs -AVSInfo $AVSInfo
                     }
                 }
             }

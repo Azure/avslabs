@@ -68,6 +68,7 @@ resource SingleSDDCDeployment 'Microsoft.Resources/deployments@2021-04-01' = {
       JumpboxUsername: { value: JumpboxUser }
       JumpboxPassword: { value: '${JumpboxPasswordPrefix}${AVSLabInstanceNumber}!' }
       JumpboxSku: { value: JumpboxSku }
+      OSVersion: { value: '2022-datacenter-azure-edition'}
       JumpboxSubnet: { value: '10.2${padLeft(AVSLabInstanceNumber, 2, '0')}.20.192/26' }
       BastionSubnet: { value: '10.2${padLeft(AVSLabInstanceNumber, 2, '0')}.30.192/26' }
       VNetExists: { value: false }

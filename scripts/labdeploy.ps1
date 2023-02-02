@@ -21,7 +21,10 @@ param (
 
     [Parameter()]
     [Alias("IsAutomated")] 
-    [switch] $automated = $false
+    [switch] $automated = $false,
+
+    [Parameter()]
+    [hashtable] $AVSInfo
 )
 #Examples:
 # labdeploy.ps1 -group 1 -lab 1
@@ -60,24 +63,36 @@ $SddcProvider = "Microsoft"
 $mypath = Get-Location
 My-Logger "Local path is $mypath"
 
-# Reading from nestedlabs.yml, setting variables for easier identification
-My-Logger "Reading from nestedlabs.yml file"
-[string[]]$fileContent = Get-Content 'nestedlabs.yml'
-$content = ''
-foreach ($line in $fileContent) { $content = $content + "`n" + $line }
-$config = ConvertFrom-YAML $content
+if ( $AVSInfo.Count -eq 0) {
+    # Reading from nestedlabs.yml, setting variables for easier identification
+    My-Logger "Reading from nestedlabs.yml file"
+    [string[]]$fileContent = Get-Content 'nestedlabs.yml'
+    $content = ''
+    foreach ($line in $fileContent) { $content = $content + "`n" + $line }
+    $config = ConvertFrom-YAML $content
+}
+else {
+    My-Logger "Getting AVS SDDC Credentials through Parameter"
+    $config = $AVSInfo
+}
 
 # vCenter Server Variables
-$VIServer = $config.AVSvCenter.URL 
+$VIServer = $config.AVSvCenter.IP 
 $VIUsername = $config.AVSvCenter.Username
 $VIPassword = $config.AVSvCenter.Password
+
+My-Logger "NSX-T Host: $VIServer"
+
+# NSX-T Server Variables
+$nsxtHost = $config.AVSNSXT.IP
+$nsxtUser = $config.AVSNSXT.Username
+$nsxtPass = $config.AVSNSXT.Password
+
+My-Logger "NSX-T Host: $nsxtHost"
 
 # AVS NSX-T Configurations
 $VMNetwork = "Group-${groupNumber}-${labNumber}-NestedLab"
 $VMNetworkCIDR = "10.${groupNumber}.${labNumber}.1/24"
-$nsxtHost = $config.AVSNSXT.Host
-$nsxtUser = $config.AVSNSXT.Username
-$nsxtPass = $config.AVSNSXT.Password
 
 # Full Path to both the Nested ESXi VA and Extracted VCSA ISO
 $NestedESXiApplianceOVA = "${mypath}\Templates\Nested_ESXi7.0u3c.ova"
@@ -372,7 +387,7 @@ if ($confirmDeployment -eq 1) {
     Write-Host -ForegroundColor White ($esxiTotalMemory + $vcsaTotalMemory + $nsxManagerTotalMemory + $nsxEdgeTotalMemory + $nfsMemory) "GB"
     Write-Host -NoNewline -ForegroundColor Green "Total Storage: "
     Write-Host -ForegroundColor White ($esxiTotalStorage + $vcsaTotalStorage + $nsxManagerTotalStorage + $nsxEdgeTotalStorage + $nfsStorage) "GB"
-
+    Write-Host -ForegroundColor White "---------------------------------------------"
     Write-Host -ForegroundColor Magenta "`nWould you like to proceed with this deployment?`n"
     if (-Not $automated) {
         $answer = Read-Host -Prompt "Do you accept (Y or N)"
