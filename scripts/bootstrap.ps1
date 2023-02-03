@@ -13,7 +13,7 @@ param (
 # constant variables
 $Logfile = "C:\temp\bootstrap.log"
 $TempPath = "C:\temp"
-$BootstrapScriptURL = "https://gpsusstoragepremium.blob.core.windows.net/avs-embedded-labs/bootstrap-nestedlabs.ps1"
+$BootstrapScriptURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap-nestedlabs.ps1"
 $PackageURL = "https://gpsusstoragepremium.blob.core.windows.net/avs-embedded-labs/avs-embedded-labs-auto.zip"
 #$NumberOfNestedLabs = 6
 
