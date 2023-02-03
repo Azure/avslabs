@@ -34,7 +34,7 @@ $ErrorActionPreference = "Stop"
 $timeStamp = Get-Date -Format "MM-dd-yyyy_hh:mm:ss"
 $timeStamp = $timeStamp.replace(':', '.')
 $verboseLogFile = "nested-lab-${group}-${lab}-${timeStamp}.log"
-Function My-Logger {
+function Write-Log {
     param(
         [Parameter(Mandatory = $true)]
         [String]$message
@@ -48,10 +48,10 @@ Function My-Logger {
     $logMessage | Out-File -Force -LiteralPath .\$verboseLogFile -Append
 }
 
-My-Logger "Reading argurments, starting build process ........"
-My-Logger "Group Number is $group"
-My-Logger "Lab Number is $lab"
-My-Logger "Is Autoamted? $automated"
+Write-Log "Reading argurments, starting build process ........"
+Write-Log " - Group Number is $group"
+Write-Log " - Lab Number is $lab"
+Write-Log " - Automation is $automated"
 
 $groupNumber = $group
 $labNumber = $lab
@@ -61,18 +61,18 @@ $SddcProvider = "Microsoft"
 
 # Local Directory Information
 $mypath = Get-Location
-My-Logger "Local path is $mypath"
+Write-Log "Local path is $mypath"
 
 if ( $AVSInfo.Count -eq 0) {
     # Reading from nestedlabs.yml, setting variables for easier identification
-    My-Logger "Reading from nestedlabs.yml file"
+    Write-Log "Reading from nestedlabs.yml file"
     [string[]]$fileContent = Get-Content 'nestedlabs.yml'
     $content = ''
     foreach ($line in $fileContent) { $content = $content + "`n" + $line }
     $config = ConvertFrom-YAML $content
 }
 else {
-    My-Logger "Getting AVS SDDC Credentials through Parameter"
+    Write-Log "Getting AVS SDDC Credentials through Parameter"
     $config = $AVSInfo
 }
 
@@ -81,14 +81,14 @@ $VIServer = $config.AVSvCenter.IP
 $VIUsername = $config.AVSvCenter.Username
 $VIPassword = $config.AVSvCenter.Password
 
-My-Logger "NSX-T Host: $VIServer"
+Write-Log "NSX-T Host: $VIServer"
 
 # NSX-T Server Variables
 $nsxtHost = $config.AVSNSXT.IP
 $nsxtUser = $config.AVSNSXT.Username
 $nsxtPass = $config.AVSNSXT.Password
 
-My-Logger "NSX-T Host: $nsxtHost"
+Write-Log "NSX-T Host: $nsxtHost"
 
 # AVS NSX-T Configurations
 $VMNetwork = "Group-${groupNumber}-${labNumber}-NestedLab"
@@ -403,21 +403,21 @@ if ($confirmDeployment -eq 1) {
 }
 
 if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
-    My-Logger "Connecting to Management vCenter Server $VIServer ..."
+    Write-Log "Connecting to Management vCenter Server $VIServer ..."
     $viConnection = Connect-VIServer $VIServer -User $VIUsername -Password $VIPassword -WarningAction SilentlyContinue
-    My-Logger "Connecting to NSX-T Server $nsxtHost ..."
+    Write-Log "Connecting to NSX-T Server $nsxtHost ..."
     $nsxtConnection = Connect-NsxtServer -Server ${nsxtHost} -User ${nsxtUser} -Password ${nsxtPass}
 
     # Create Resource Pool
-    My-Logger "Creating $VMResourcePool if it does not exist ......"
+    Write-Log "Creating $VMResourcePool if it does not exist ......"
 
     if (-Not (Get-ResourcePool -Name $VMResourcePool -Server $viConnection -ErrorAction Ignore)) {
         $newrp = New-ResourcePool -Server $viConnection -Location 'Cluster-1' -Name $VMResourcePool
-        My-Logger "Creation of $VMResourcePool completed."
+        Write-Log "Creation of $VMResourcePool completed."
     }
 
     # Get Transport Zone ID: Transport Zone Overlay = $tzoneOverlay, Transport Zone Overlay ID = $tzoneOverlayID, tzPath
-    My-Logger "Getting Transport Zone Overlay ID from NSX-T"
+    Write-Log "Getting Transport Zone Overlay ID from NSX-T"
 
     $tzSvc = Get-NsxtService -Name com.vmware.nsx.transport_zones
     $tzones = $tzSvc.list()
@@ -428,7 +428,7 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $tzPath = ($transportZonePolicyService.list("default", "default").results | where { $_.display_name -like "TNT**-OVERLAY-TZ" }).path
 
     # Get Default T1 Gateway
-    My-Logger "Getting NSX-T Default T1 Gateway"
+    Write-Log "Getting NSX-T Default T1 Gateway"
 
     $t1svc = Get-NsxtService -Name com.vmware.nsx.logical_routers
     $t1list = $t1Svc.list()
@@ -448,10 +448,10 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $IPProfileName = "Group${groupNumber}-IPDiscoveryProfile"
 
     if ($switchprofName -contains "$IPProfileName") {
-        My-Logger "$IPProfileName already exists, will use it."
+        Write-Log "$IPProfileName already exists, will use it."
     }
     else {
-        My-Logger "Creating $IPProfileName......"
+        Write-Log "Creating $IPProfileName......"
 
         $uri = "https://$nsxtHost/policy/api/v1/infra/ip-discovery-profiles/$IPProfileName"
 
@@ -498,10 +498,10 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $MACProfileName = "Group${groupNumber}-MACDiscoveryProfile"
 
     if ($switchprofName -contains "$MACProfileName") {
-        My-Logger "$MACProfileName already exists, will use it."
+        Write-Log "$MACProfileName already exists, will use it."
     }
     else {
-        My-Logger "Creating $MACProfileName......"
+        Write-Log "Creating $MACProfileName......"
 
         $uri = "https://$nsxtHost/policy/api/v1/infra/mac-discovery-profiles/$MACProfileName"
 
@@ -532,10 +532,10 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $SegSecProfileName = "Group${groupNumber}-SegmentSecurityProfile"
 
     if ($switchprofName -contains "$SegSecProfileName") {
-        My-Logger "$SegSecProfileName already exists, will use it."
+        Write-Log "$SegSecProfileName already exists, will use it."
     }
     else {
-        My-Logger "Creating $SegSecProfileName......"
+        Write-Log "Creating $SegSecProfileName......"
 
         $uri = "https://$nsxtHost/policy/api/v1/infra/segment-security-profiles/$SegSecProfileName"
 
@@ -565,12 +565,12 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     }
 
     ## Create Network Segment for Embedded Lab
-    My-Logger "Creating Network in AVS NSX-T for Embedded Lab ${labNumber}"
+    Write-Log "Creating Network in AVS NSX-T for Embedded Lab ${labNumber}"
 
     $network = $VMNetwork
     $segmentName = $VMNetwork
     $gatewayaddress = $VMNetworkCIDR
-    My-Logger "Creating $segmentName....."
+    Write-Log "Creating $segmentName....."
 
     $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$($nsxtUser):$($nsxtPass)"))
     $Header = @{
@@ -593,11 +593,11 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $patchSegmentURL = "https://$nsxtHost/policy/api/v1/infra/tier-1s/$t1Name/segments/" + $segmentName
     $segmentCreation = Invoke-RestMethod -Uri $patchSegmentURL -Headers $Header -Method Patch -Body $Body -ContentType "application/json" -SkipCertificateCheck
         
-    My-Logger "$segmentName created....."
+    Write-Log "$segmentName created....."
     sleep 15
 
     ## Adding Security Segment Profile
-    My-Logger "Adding Security Segment Profile to $segmentName ....."
+    Write-Log "Adding Security Segment Profile to $segmentName ....."
 
     $bindingName = "Lab${groupNumber}-segment_security_binding_map"
 
@@ -625,7 +625,7 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $secProfAdd = Invoke-RestMethod -Uri $uri -Headers $Header -Method Put -Body $Body -ContentType "application/json" -SkipCertificateCheck
 
     ## Adding Discovery Segment Profiles
-    My-Logger "Adding Discovery Segment Profile to $segmentName ....."
+    Write-Log "Adding Discovery Segment Profile to $segmentName ....."
 
     $bindingName = "Lab${groupNumber}-segment_discovery_binding_map"
 
@@ -650,7 +650,7 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $discProfAdd = Invoke-RestMethod -Uri $uri -Headers $Header -Method Patch -Body $Body -ContentType "application/json" -SkipCertificateCheck
 
     # Get Logical Switch Information
-    My-Logger "Getting Logical Switch Information for $segmentName"
+    Write-Log "Getting Logical Switch Information for $segmentName"
 
     $lssvc = Get-NsxtService -Name com.vmware.nsx.logical_switches
     $lslist = $lsSvc.list()
@@ -692,23 +692,23 @@ if ($deployNestedESXiVMs -eq 1) {
         }
         $ovfconfig.common.guestinfo.ssh.value = $VMSSHVar
     
-        My-Logger "Deploying Nested ESXi VM $VMName ..."
+        Write-Log "Deploying Nested ESXi VM $VMName ..."
         $vm = Import-VApp -Source $NestedESXiApplianceOVA -OvfConfiguration $ovfconfig -Name $VMName -Location $resourcepool -VMHost $vmhost -Datastore $datastore -DiskStorageFormat thin -Force
 
-        My-Logger "Adding vmnic2/vmnic3 to $VMNetwork ..."
+        Write-Log "Adding vmnic2/vmnic3 to $VMNetwork ..."
         New-NetworkAdapter -VM $vm -Type Vmxnet3 -NetworkName $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
         New-NetworkAdapter -VM $vm -Type Vmxnet3 -NetworkName $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
 
-        My-Logger "Updating vCPU Count to $NestedESXivCPU & vMEM to $NestedESXivMEM GB ..."
+        Write-Log "Updating vCPU Count to $NestedESXivCPU & vMEM to $NestedESXivMEM GB ..."
         Set-VM -Server $viConnection -VM $vm -NumCpu $NestedESXivCPU -MemoryGB $NestedESXivMEM -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
 
         if ($supportedStorageType.$SddcProvider -eq "VSAN") {
-            My-Logger "Updating vSAN Cache VMDK size to $NestedESXiCachingvDisk GB & Capacity VMDK size to $NestedESXiCapacityvDisk GB ..."
+            Write-Log "Updating vSAN Cache VMDK size to $NestedESXiCachingvDisk GB & Capacity VMDK size to $NestedESXiCapacityvDisk GB ..."
             Get-HardDisk -Server $viConnection -VM $vm -Name "Hard disk 2" | Set-HardDisk -CapacityGB $NestedESXiCachingvDisk -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
             Get-HardDisk -Server $viConnection -VM $vm -Name "Hard disk 3" | Set-HardDisk -CapacityGB $NestedESXiCapacityvDisk -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
         }
 
-        My-Logger "Powering On $vmname ..."
+        Write-Log "Powering On $vmname ..."
         $vm | Start-Vm -RunAsync | Out-Null
     }
 }
@@ -728,10 +728,10 @@ if ($deployNFSVM -eq 1 -and $supportedStorageType.$SddcProvider -eq "NFS") {
     $ovfconfig.common.guestinfo.nfs_volume_name.value = $NFSVMVolumeLabel
     $ovfconfig.Common.disk2size.value = $NFSVMCapacity
 
-    My-Logger "Deploying PhotonOS NFS VM $NFSVMDisplayName ..."
+    Write-Log "Deploying PhotonOS NFS VM $NFSVMDisplayName ..."
     $vm = Import-VApp -Source $PhotonNFSOVA -OvfConfiguration $ovfconfig -Name $NFSVMDisplayName -Location $resourcepool -VMHost $vmhost -Datastore $datastore -DiskStorageFormat thin -Force
 
-    My-Logger "Powering On $NFSVMDisplayName ..."
+    Write-Log "Powering On $NFSVMDisplayName ..."
     $vm | Start-Vm -RunAsync | Out-Null
 }
 
@@ -776,52 +776,52 @@ if ($deployVCSA -eq 1) {
     $config.'new_vcsa'.vc | Add-Member NoteProperty -Name target -Value "REPLACE-ME"
 
     if ($IsWindows) {
-        My-Logger "Creating VCSA JSON Configuration file for deployment ..."
+        Write-Log "Creating VCSA JSON Configuration file for deployment ..."
         $config | ConvertTo-Json | Set-Content -Path "$($ENV:Temp)\jsontemplate.json"
         $target = "[`"$VMCluster`",`"Resources`",`"$VMResourcePool`"]"
             (Get-Content -path "$($ENV:Temp)\jsontemplate.json" -Raw) -replace '"REPLACE-ME"', $target | Set-Content -path "$($ENV:Temp)\jsontemplate.json"
 
-        My-Logger "Deploying the VCSA ..."
+        Write-Log "Deploying the VCSA ..."
         Invoke-Expression "$($VCSAInstallerPath)\vcsa-cli-installer\win32\vcsa-deploy.exe install --no-ssl-certificate-verification --accept-eula --acknowledge-ceip $($ENV:Temp)\jsontemplate.json" | Out-File -Append -LiteralPath $verboseLogFile
     }
     elseif ($IsMacOS) {
-        My-Logger "Creating VCSA JSON Configuration file for deployment ..."
+        Write-Log "Creating VCSA JSON Configuration file for deployment ..."
         $config | ConvertTo-Json | Set-Content -Path "$($ENV:TMPDIR)jsontemplate.json"
 
-        My-Logger "Deploying the VCSA ..."
+        Write-Log "Deploying the VCSA ..."
         Invoke-Expression "$($VCSAInstallerPath)/vcsa-cli-installer/mac/vcsa-deploy install --no-ssl-certificate-verification --accept-eula --acknowledge-ceip $($ENV:TMPDIR)jsontemplate.json" | Out-File -Append -LiteralPath $verboseLogFile
     }
     elseif ($IsLinux) {
-        My-Logger "Creating VCSA JSON Configuration file for deployment ..."
+        Write-Log "Creating VCSA JSON Configuration file for deployment ..."
         $config | ConvertTo-Json | Set-Content -Path "/tmp/jsontemplate.json"
 
-        My-Logger "Deploying the VCSA ..."
+        Write-Log "Deploying the VCSA ..."
         Invoke-Expression "$($VCSAInstallerPath)/vcsa-cli-installer/lin64/vcsa-deploy install --no-ssl-certificate-verification --accept-eula --acknowledge-ceip /tmp/jsontemplate.json" | Out-File -Append -LiteralPath $verboseLogFile
     }
 }
 
-My-Logger "Disconnecting from $VIServer ..."
+Write-Log "Disconnecting from $VIServer ..."
 Disconnect-VIServer -Server $viConnection -Confirm:$false
-My-Logger "Reconnecting $VIServer"
+Write-Log "Reconnecting $VIServer"
 $viConnection = Connect-VIServer $VIServer -User $VIUsername -Password $VIPassword -WarningAction SilentlyContinue
 
 if ($moveVMsIntovApp -eq 1) {
-    My-Logger "Creating vApp $VAppName ..."
+    Write-Log "Creating vApp $VAppName ..."
     $VApp = New-VApp -Name $VAppName -Server $viConnection -Location $resourcepool
 
     if (-Not (Get-Folder $VMFolder -ErrorAction Ignore)) {
-        My-Logger "Creating VM Folder $VMFolder ..."
+        Write-Log "Creating VM Folder $VMFolder ..."
         $folder = New-Folder -Name $VMFolder -Server $viConnection -Location (Get-Datacenter $VMDatacenter | Get-Folder vm)
     }
 
     if ($deployNFSVM -eq 1 -and $supportedStorageType.$SddcProvider -eq "NFS") {
         $vcsaVM = Get-VM -Name $NFSVMDisplayName -Server $viConnection
-        My-Logger "Moving $NFSVMDisplayName into $VAppName vApp ..."
+        Write-Log "Moving $NFSVMDisplayName into $VAppName vApp ..."
         Move-VM -VM $vcsaVM -Server $viConnection -Destination $VApp -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
     }
 
     if ($deployNestedESXiVMs -eq 1) {
-        My-Logger "Moving Nested ESXi VMs into $VAppName vApp ..."
+        Write-Log "Moving Nested ESXi VMs into $VAppName vApp ..."
         $NestedESXiHostnameToIPs.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
             $vm = Get-VM -Name $_.Key -Server $viConnection
             Move-VM -VM $vm -Server $viConnection -Destination $VApp -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
@@ -830,37 +830,37 @@ if ($moveVMsIntovApp -eq 1) {
 
     if ($deployVCSA -eq 1) {
         $vcsaVM = Get-VM -Name $VCSADisplayName -Server $viConnection
-        My-Logger "Moving $VCSADisplayName into $VAppName vApp ..."
+        Write-Log "Moving $VCSADisplayName into $VAppName vApp ..."
         Move-VM -VM $vcsaVM -Server $viConnection -Destination $VApp -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
     }
 
-    My-Logger "Moving $VAppName to VM Folder $VMFolder ..."
+    Write-Log "Moving $VAppName to VM Folder $VMFolder ..."
     Move-VApp -Server $viConnection $VAppName -Destination (Get-Folder -Server $viConnection $VMFolder) | Out-File -Append -LiteralPath $verboseLogFile
 }
 
 if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
-    My-Logger "Disconnecting from $VIServer ..."
+    Write-Log "Disconnecting from $VIServer ..."
     Disconnect-VIServer -Server $viConnection -Confirm:$false
 }
 
 if ($setupNewVC -eq 1) {
-    My-Logger "Connecting to the new VCSA ..."
+    Write-Log "Connecting to the new VCSA ..."
     $vc = Connect-VIServer $VCSAIPAddress -User "administrator@$VCSASSODomainName" -Password $VCSASSOPassword -WarningAction SilentlyContinue -Force
 
     $d = Get-Datacenter -Server $vc $NewVCDatacenterName -ErrorAction Ignore
     if ( -Not $d) {
-        My-Logger "Creating Datacenter $NewVCDatacenterName ..."
+        Write-Log "Creating Datacenter $NewVCDatacenterName ..."
         New-Datacenter -Server $vc -Name $NewVCDatacenterName -Location (Get-Folder -Type Datacenter -Server $vc) | Out-File -Append -LiteralPath $verboseLogFile
     }
 
     $c = Get-Cluster -Server $vc $NewVCVSANClusterName -ErrorAction Ignore
     if ( -Not $c) {
         if ($configureESXiStorage -eq 1 -and $supportedStorageType.$SddcProvider -eq "VSAN") {
-            My-Logger "Creating VSAN Cluster $NewVCVSANClusterName ..."
+            Write-Log "Creating VSAN Cluster $NewVCVSANClusterName ..."
             New-Cluster -Server $vc -Name $NewVCVSANClusterName -Location (Get-Datacenter -Name $NewVCDatacenterName -Server $vc) -DrsEnabled -VsanEnabled | Out-File -Append -LiteralPath $verboseLogFile
         }
         else {
-            My-Logger "Creating vSphere Cluster $NewVCVSANClusterName ..."
+            Write-Log "Creating vSphere Cluster $NewVCVSANClusterName ..."
             New-Cluster -Server $vc -Name $NewVCVSANClusterName -Location (Get-Datacenter -Name $NewVCDatacenterName -Server $vc) -DrsEnabled | Out-File -Append -LiteralPath $verboseLogFile
         }
     }
@@ -874,20 +874,20 @@ if ($setupNewVC -eq 1) {
             if ($addHostByDnsName -eq 1) {
                 $targetVMHost = $VMName
             }
-            My-Logger "Adding ESXi host $targetVMHost to Cluster ..."
+            Write-Log "Adding ESXi host $targetVMHost to Cluster ..."
             Add-VMHost -Server $vc -Location (Get-Cluster -Name $NewVCVSANClusterName) -User "root" -Password $VMPassword -Name $targetVMHost -Force | Out-File -Append -LiteralPath $verboseLogFile
         }
     }
 
     if ($configureESXiStorage -eq 1) {
         if ($supportedStorageType.$SddcProvider -eq "VSAN") {
-            My-Logger "Enabling VSAN & disabling VSAN Health Check ..."
+            Write-Log "Enabling VSAN & disabling VSAN Health Check ..."
             Get-VsanClusterConfiguration -Server $vc -Cluster $NewVCVSANClusterName | Set-VsanClusterConfiguration -HealthCheckIntervalMinutes 0 | Out-File -Append -LiteralPath $verboseLogFile
 
             foreach ($vmhost in Get-Cluster -Server $vc | Get-VMHost) {
                 $luns = $vmhost | Get-ScsiLun | select CanonicalName, CapacityGB
 
-                My-Logger "Querying ESXi host disks to create VSAN Diskgroups ..."
+                Write-Log "Querying ESXi host disks to create VSAN Diskgroups ..."
                 foreach ($lun in $luns) {
                     if (([int]($lun.CapacityGB)).toString() -eq "$NestedESXiCachingvDisk") {
                         $vsanCacheDisk = $lun.CanonicalName
@@ -896,13 +896,13 @@ if ($setupNewVC -eq 1) {
                         $vsanCapacityDisk = $lun.CanonicalName
                     }
                 }
-                My-Logger "Creating VSAN DiskGroup for $vmhost ..."
+                Write-Log "Creating VSAN DiskGroup for $vmhost ..."
                 New-VsanDiskGroup -Server $vc -VMHost $vmhost -SsdCanonicalName $vsanCacheDisk -DataDiskCanonicalName $vsanCapacityDisk | Out-File -Append -LiteralPath $verboseLogFile
             }
         }
         else {
             $labDatastore = "LabDatastore"
-            My-Logger "Adding NFS Storage ..."
+            Write-Log "Adding NFS Storage ..."
             foreach ($vmhost in Get-Cluster -Server $vc | Get-VMHost) {
                 $vmhost | New-Datastore -Nfs -Name $labDatastore -Path /mnt/${NFSVMVolumeLabel} -NfsHost $NFSVMIPAddress | Out-File -Append -LiteralPath $verboseLogFile
             }
@@ -919,7 +919,7 @@ if ($setupNewVC -eq 1) {
         New-VDPortgroup -Server $vc -Name $NewVCWorkloadDVPGName -VLanId $workloadVLANid -Vds $vds | Out-File -Append -LiteralPath $verboseLogFile
 
         foreach ($vmhost in Get-Cluster -Server $vc | Get-VMHost) {
-            My-Logger "Adding $vmhost to $NewVCVDSName"
+            Write-Log "Adding $vmhost to $NewVCVDSName"
             $vds | Add-VDSwitchVMHost -VMHost $vmhost | Out-Null
 
             $vmhostNetworkAdapter = Get-VMHost $vmhost | Get-VMHostNetworkAdapter -Physical -Name vmnic1
@@ -928,7 +928,7 @@ if ($setupNewVC -eq 1) {
     }
 
     if ($clearHealthCheckAlarm -eq 1 -and $supportedStorageType.$SddcProvider -eq "VSAN") {
-        My-Logger "Clearing Health Check Alarms ..."
+        Write-Log "Clearing Health Check Alarms ..."
         $alarmMgr = Get-View AlarmManager -Server $vc
         Get-Cluster -Server $vc | where { $_.ExtensionData.TriggeredAlarmState } | % {
             $cluster = $_
@@ -980,14 +980,14 @@ if ($setupNewVC -eq 1) {
         }
     }
 
-    My-Logger "Disconnecting from new VCSA ..."
+    Write-Log "Disconnecting from new VCSA ..."
     Disconnect-VIServer $vc -Confirm:$false
 }
 
 $EndTime = Get-Date
 $duration = [math]::Round((New-TimeSpan -Start $StartTime -End $EndTime).TotalMinutes, 2)
 
-My-Logger "Nested SDDC Lab Deployment Complete!"
-My-Logger "-StartTime: $StartTime"
-My-Logger "-EndTime: $EndTime"
-My-Logger "-Duration: $duration minutes"
+Write-Log "Nested SDDC Lab Deployment Complete!"
+Write-Log "-StartTime: $StartTime"
+Write-Log "-EndTime: $EndTime"
+Write-Log "-Duration: $duration minutes"
