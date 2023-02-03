@@ -71,6 +71,8 @@ function Install-Applications {
     #choco install microsoftazurestorageexplorer -y
 
     #refreshenv
+
+    Write-Log "|--Install-Applications - Used Choco to install: PowerShell-Core, AzCopy, AzCli, 7zip and VMRC"
 }
 
 function Get-BootstrapScript {
@@ -108,7 +110,7 @@ function Set-BootstrapScheduledTask {
 
     Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $taskName -Description $taskDescription -Principal $principal -Settings $settings -Force
     
-    Write-Log "|--Set-BootstrapScheduledTask - bootstrap-nestedlabs.ps1 will be deploying $NumberOfNestedLabs nested labs for GroupId $GroupNumber"
+    Write-Log "|--Set-BootstrapScheduledTask - bootstrap-nestedlabs.ps1 will be deploying $NumberOfNestedLabs nested labs for group $GroupNumber"
 
 }
 
@@ -117,7 +119,7 @@ function Get-NestedLabPackage {
     $ZipPackagePath = $TempPath + "\" + $PackageURL.Split('/')[-1]
 
     if (Test-Path $ZipPackagePath -PathType Leaf) {
-        Write-Log "|--Get-NestedLabPackage - Nested labs Zip package already exists"
+        Write-Log "|--Get-NestedLabPackage - Nested labs zip package already exists"
         return $true
     }
     else { 
@@ -125,11 +127,11 @@ function Get-NestedLabPackage {
         Start-BitsTransfer -Source $PackageURL -Destination $TempPath -Priority High
 
         if (Test-Path $ZipPackagePath -PathType Leaf) {
-            Write-Log "|--Get-NestedLabPackage - Nested labs Zip package downloaded successfully"
+            Write-Log "|--Get-NestedLabPackage - Nested labs zip package downloaded successfully"
             return $true
         }
         else {
-            Write-Log "|--Get-NestedLabPackage - Failed to download nested labs Zip package. Please run bootstrap.ps1 again to make sure package is downloaded properly before you proceed"
+            Write-Log "|--Get-NestedLabPackage - Failed to download nested labs zip package. Please run bootstrap.ps1 again to make sure package is downloaded properly before you proceed"
             return $false
         }
     }
