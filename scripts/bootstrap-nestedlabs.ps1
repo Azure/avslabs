@@ -153,7 +153,7 @@ function Set-NestedLabRequirement {
     
     # Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 
-    Start-Sleep -Seconds 30
+    # Start-Sleep -Seconds 30
 
     # Install YAML PowerShell Module
     # $result = (Get-Module -ListAvailable -Name powershell-yaml) ? $true : (Install-Module powershell-yaml -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
@@ -175,10 +175,12 @@ function Set-NestedLabPackage {
     }
 
     if (Test-Path $ZipPath -PathType Leaf) {
-        #Extract zip file using 7zip
+        
         Set-Location $TempPath
 
         Write-Log "|--Set-NestedLabPackage - Extracting '$ZipPath'"
+
+        #Extract zip file using 7zip
         7z x $ZipPath -o*
 
         return (Test-Path $ExtractionPath)
@@ -320,14 +322,11 @@ function Build-NestedLab {
 
 function Complete-NestedLabDeployment {
     Disable-ScheduledTask -TaskName "Build Nested Labs"
-
-
 }
 
 #-------------------------------------------------------------------------------------------------------#
 
 # Execution:
-
 
 Write-Log " "
 Write-Log "#---===---===---===---===---===---===---===---===---===---===---===---===---===---#"
