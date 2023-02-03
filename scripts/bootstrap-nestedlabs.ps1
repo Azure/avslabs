@@ -14,6 +14,7 @@ param (
 $Logfile = "C:\temp\bootstrap-nestedlabs.log"
 $TempPath = "C:\temp"
 $ExtractionPath = "C:\temp\avs-embedded-labs-auto"
+$NestedLabScriptURL = "https://github.com/Azure/avslabs/blob/main/scripts/labdeploy.ps1"
 
 # initializing
 
@@ -182,6 +183,15 @@ function Set-NestedLabPackage {
 
         #Extract zip file using 7zip
         7z x $ZipPath -o*
+
+        #Downloading latest version of labdeploy.ps1
+        $NestedLabScriptPath = $ExtractionPath + "\" + $NestedLabScriptURL.Split('/')[-1]
+        if(Test-Path $NestedLabScriptPath -PathType Leaf)
+        {
+            Remove-Item -Path $NestedLabScriptPath -Force -Confirm:$false -ErrorAction Continue
+        }
+
+        Start-BitsTransfer -Source $NestedLabScriptURL -Destination $ExtractionPath -Priority High
 
         return (Test-Path $ExtractionPath)
     }
