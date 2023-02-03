@@ -26,7 +26,7 @@
             "value": true
         },
         "BootstrapPath": {
-            "value": "https://github.com/Azure/avslabs/blob/main/scripts/bootstrap.ps1"
+            "value": "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1"
         },
         "ESLZTemplate": {
             "value": "https://raw.githubusercontent.com/husamhilal/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/ARM/ESLZDeploy.deploy.json"

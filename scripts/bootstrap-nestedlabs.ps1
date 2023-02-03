@@ -14,7 +14,7 @@ param (
 $Logfile = "C:\temp\bootstrap-nestedlabs.log"
 $TempPath = "C:\temp"
 $ExtractionPath = "C:\temp\avs-embedded-labs-auto"
-$NestedLabScriptURL = "https://github.com/Azure/avslabs/blob/main/scripts/labdeploy.ps1"
+$NestedLabScriptURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/labdeploy.ps1"
 
 # initializing
 
