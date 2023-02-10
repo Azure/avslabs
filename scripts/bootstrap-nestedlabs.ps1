@@ -186,8 +186,7 @@ function Set-NestedLabPackage {
 
         #Downloading latest version of labdeploy.ps1
         $NestedLabScriptPath = $ExtractionPath + "\" + $NestedLabScriptURL.Split('/')[-1]
-        if(Test-Path $NestedLabScriptPath -PathType Leaf)
-        {
+        if (Test-Path $NestedLabScriptPath -PathType Leaf) {
             Remove-Item -Path $NestedLabScriptPath -Force -Confirm:$false -ErrorAction Continue
         }
 
@@ -205,8 +204,6 @@ function Set-NestedLabPackage {
 function Get-NestedLabConfigurations {
     # This script block grabs AVS credentials and store them in a variable that is required to run the nested lab deployment script.
     # It uses a Managed Identity of the Jumpbox VM that has Contributor access over AVS Private Cloud
-
-    Set-Location $ExtractionPath
 
     [void] (az login --identity)
     [void] (az config set extension.use_dynamic_install=yes_without_prompt)
@@ -237,6 +234,9 @@ function Get-NestedLabConfigurations {
     
     Write-Log "|--Get-NestedLabConfigurations - Grabbed AVS Credentials"
     
+    #$configs | ConvertTo-Json
+
+    #Set-Location $ExtractionPath
     #$configs = @{"AVSvCenter" = @{"URL" = $vcsaIP; "Username" = $credsJson.vcenterUsername; "Password" = $credsJson.vcenterPassword }; "AVSNSXT" = @{"Host" = $nsxtIP; "Username" = $credsJson.nsxtUsername; "Password" = $credsJson.nsxtPassword } }
     #ConvertTo-Yaml $configs -OutFile $ExtractionPath\nestedlabs.yml -Force
     ##$configs | Out-File -FilePath .\nestedlabs.yml
@@ -246,6 +246,7 @@ function Get-NestedLabConfigurations {
 }
 
 function Enable-AVSPrivateCloudInternetViaSNAT {
+    
     [void] (az login --identity)
     [void] (az config set extension.use_dynamic_install=yes_without_prompt)
 
