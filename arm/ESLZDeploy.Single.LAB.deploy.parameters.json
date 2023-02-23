@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "AVSLabInstanceNumber": {
+            "value": 3
+        },
+        "Prefix": {
+            "value": "GPSUS-WIPRO"
+        },
+        "Location": {
+            "value": "canadacentral"
+        },
+        "AlertEmails": {
+            "value": [
+                "husam.hilal@microsoft.com",
+                "rcanton@microsoft.com"
+            ]
+        },
+        "JumpboxSku": {
+            "value": "Standard_D2ds_v5"
+        },
+        "BootstrapPath": {
+            "value": "https://gpsusstoragepremium.blob.core.windows.net/avs-embedded-labs/bootstrap.ps1"
+        },
+        "ESLZTemplate": {
+            "value": "https://raw.githubusercontent.com/husamhilal/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/ARM/ESLZDeploy.deploy.json"
+        }
+    }
+}
