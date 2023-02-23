@@ -1,0 +1,158 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "AVSLabInstanceNumber": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The number value of the AVS SDDC Lab"
+            }
+        },
+        "Prefix": {
+            "type": "string",
+            "defaultValue": "GPSUS-XYZ",
+            "maxLength": 20,
+            "minLength": 1,
+            "metadata": {
+                "description": "The prefix to use on resources inside this template"
+            }
+        },
+        "Location": {
+            "type": "string",
+            "defaultValue": "[deployment().location]",
+            "metadata": {
+                "description": "Optional: The location the private cloud should be deployed to, by default this will be the location of the deployment"
+            },
+            "allowedValues": [ "southafricanorth", "brazilsouth", "canadacentral", "southeastasia" ]
+        },
+        "AlertEmails": {
+            "type": "array",
+            "defaultValue": [],
+            "metadata": {
+                "description": "Email addresses to be added to the alerting action group. Use the format [\"name1@domain.com\",\"name2@domain.com\"]."
+            }
+        },
+        "JumpboxSku": {
+            "type": "string",
+            "defaultValue": "Standard_D2as_v4",
+            "metadata": {
+                "description": "The sku to use for the Jumpbox VM, must have quota for this within the target region"
+            },
+            "allowedValues": [ "Standard_D2ds_v5", "Standard_D2as_v4", "Standard_D2s_v3", "Standard_B2ms" ]
+        },
+        "JumpboxUser": {
+            "type": "string",
+            "defaultValue": "avsjump",
+            "metadata": {
+                "description": "AVS Jumpbox User account name"
+            }
+        },
+        "JumpboxPasswordPrefix": {
+            "type": "securestring",
+            "defaultValue": "AVS-Group",
+            "metadata": {
+                "description": "Password Prefix for the Jumpbox VM"
+            }
+        },
+        "BootstrapPath": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/Scripts/bootstrap.ps1",
+            "metadata": {
+                "description": "Path for Jumpbox VM bootstrap script"
+            }
+        },
+        "ESLZTemplate": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/ARM/ESLZDeploy.deploy.json",
+            "metadata": {
+                "description": "Path to AVS ESLZ Template"
+            }
+        },
+        "TodayDate": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        }
+    },
+    "functions": [],
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2021-04-01",
+            "name": "[concat(parameters('Prefix'),'-LAB-Deployment-', parameters('AVSLabInstanceNumber'),uniqueString(parameters('Prefix'),parameters('TodayDate')))]",
+            "location": "[parameters('Location')]",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "Outer"
+                },
+                "templateLink": {
+                    "uri": "[parameters('ESLZTemplate')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "Location": {
+                        "value": "[parameters('Location')]"
+                    },
+                    "Prefix": {
+                        "value": "[concat(parameters('Prefix'), parameters('AVSLabInstanceNumber'))]"
+                    },
+                    "PrivateCloudAddressSpace": {
+                        "value": "[concat('10.1', padLeft(parameters('AVSLabInstanceNumber'),2,'0'),'.0.0/22')]"
+                    },
+                    "VNetAddressSpace": {
+                        "value": "[concat('10.2', padLeft(parameters('AVSLabInstanceNumber'),2,'0'),'.0.0/16')]"
+                    },
+                    "VNetGatewaySubnet": {
+                        "value": "[concat('10.2', padLeft(parameters('AVSLabInstanceNumber'),2,'0'),'.10.0/24')]"
+                    },
+                    "AlertEmails": {
+                        "value": "[parameters('AlertEmails')]"
+                    },
+                    "DeployJumpbox": {
+                        "value": true
+                    },
+                    "AssignJumpboxAsAVSContributor": {
+                        "value": true
+                    },
+                    "BootstrapJumpboxVM": {
+                        "value": true
+                    },
+                    "BootstrapPath": {
+                        "value": "[parameters('BootstrapPath')]"
+                    },
+                    "JumpboxUsername": {
+                        "value": "[parameters('JumpboxUser')]"
+                    },
+                    "JumpboxPassword": {
+                        "value": "[concat(parameters('JumpboxPasswordPrefix'), parameters('AVSLabInstanceNumber'),'!')]"
+                    },
+                    "JumpboxSku": {
+                        "value": "[parameters('JumpboxSku')]"
+                    },
+                    "JumpboxSubnet": {
+                        "value": "[concat('10.2', padLeft(parameters('AVSLabInstanceNumber'),2,'0'),'.20.192/26')]"
+                    },
+                    "BastionSubnet": {
+                        "value": "[concat('10.2', padLeft(parameters('AVSLabInstanceNumber'),2,'0'),'.30.192/26')]"
+                    },
+                    "VNetExists": {
+                        "value": false
+                    },
+                    "DeployHCX": {
+                        "value": true
+                    },
+                    "DeploySRM": {
+                        "value": false
+                    },
+                    "VRServerCount": {
+                        "value": 1
+                    }
+
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
