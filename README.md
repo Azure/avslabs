@@ -29,26 +29,31 @@ Thus, the solution was to create automation package that will deploy AVS based o
 ## Deployment
 Here are the steps you need to take to deploy AVS Lab with nested VMware lab environments.
 
->> Make sure to update the the parameter file with the right values, such as: **NumberOfAVSInstances**, **NumberOfNestedLabsInAVS**, **Prefix**, **Location**, **AlertEmails**, etc...
+> Make sure to update the the parameter file with the right values, such as: **NumberOfAVSInstances**, **NumberOfNestedLabsInAVS**, **Prefix**, **Location**, **AlertEmails**, etc...
 
-From Azure CLI run the deployment command as in the following example. Make sure to provide the a unique **name** for the deployment, the right **location**, your deployment choice **bicep file** and the corresponding **parameter file**.
+**From Azure CLI run the deployment command as in the following examples.**
+
+>Make sure to provide the a unique **name** for the deployment, the right **location**, your deployment choice **bicep file** and the corresponding **parameter file**.
+
 ```dotnetcli
 az deployment sub create -n "<deployment-unique-name" -l "<location>" -f "<bicep-template-file-name>" -p "<corresponding-parameter-file>" --no-wait
 ```
+
 As an example for **single lab** deployment:
+
 ```dotnetcli
 az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.Single.LAB.deploy.bicep" -p "ESLZDeploy.Single.LAB.deploy.bicep.parameters.json" --no-wait
 ```
+
 As an example for **multiple lab** deployment:
+
 ```dotnetcli
 az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.LAB.deploy.bicep" -p "ESLZDeploy.LAB.deploy.bicep.parameters.json" --no-wait
 ```
 
 For a reference to az deployment command, see [this](https://learn.microsoft.com/en-us/cli/azure/deployment/sub?view=azure-cli-latest#az-deployment-sub-create)
 
-
-
-# Disclaimer
+## Disclaimer
 
 This is not official Microsoft documentation or software.
 This is not an endorsement or a sign-off of an architecture or a design.
