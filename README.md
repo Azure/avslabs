@@ -29,27 +29,43 @@ Thus, the solution was to create automation package that will deploy AVS based o
 ## Deployment
 Here are the steps you need to take to deploy AVS Lab with nested VMware lab environments.
 
-> Make sure to update the the parameter file with the right values, such as: **NumberOfAVSInstances**, **NumberOfNestedLabsInAVS**, **Prefix**, **Location**, **AlertEmails**, etc...
+1. [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository.
 
-**From Azure CLI run the deployment command as in the following examples.**
+   ```powershell
+   git clone https://github.com/Azure/avslabs.git
+   ```
 
->Make sure to provide the a unique **name** for the deployment, the right **location**, your deployment choice **bicep file** and the corresponding **parameter file**.
+2. Change directory to 'bicep' directory.
 
-```dotnetcli
-az deployment sub create -n "<deployment-unique-name" -l "<location>" -f "<bicep-template-file-name>" -p "<corresponding-parameter-file>" --no-wait
-```
+   ```powershell
+   cd .\bicep\
+   ```
 
-As an example for **single lab** deployment:
+3. Update Parameters File
 
-```dotnetcli
-az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.Single.LAB.deploy.bicep" -p "ESLZDeploy.Single.LAB.deploy.bicep.parameters.json" --no-wait
-```
+   > Make sure to update the the parameter file with the right values, such as: **NumberOfAVSInstances**, **NumberOfNestedLabsInAVS**, **Prefix**, **Location**, **AlertEmails**, etc...
 
-As an example for **multiple lab** deployment:
+4. Execute the Deployment
 
-```dotnetcli
-az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.LAB.deploy.bicep" -p "ESLZDeploy.LAB.deploy.bicep.parameters.json" --no-wait
-```
+   **From Azure CLI run the deployment command as in the following examples.**
+
+   >Make sure to provide the a unique **name** for the deployment, the right **location**, your deployment choice **bicep file** and the corresponding **parameter file**.
+
+   ```azurecli
+   az deployment sub create -n "<deployment-unique-name" -l "<location>" -f "<bicep-template-file-name>" -p "<corresponding-parameter-file>" --no-wait
+   ```
+
+   As an example for **single lab** deployment:
+
+   ```azurecli
+   az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.Single.LAB.deploy.bicep" -p "ESLZDeploy.Single.LAB.deploy.bicep.parameters.json" --no-wait
+   ```
+
+   As an example for **multiple lab** deployment:
+
+   ```azurecli
+   az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.LAB.deploy.bicep" -p "ESLZDeploy.LAB.deploy.bicep.parameters.json" --no-wait
+   ```
 
 For a reference to az deployment command, see [this](https://learn.microsoft.com/en-us/cli/azure/deployment/sub?view=azure-cli-latest#az-deployment-sub-create)
 
