@@ -77,7 +77,7 @@ function Test-AuthenticationToAVS {
 
         if ($totalTimeWaited -gt $maxWaitTime) {            
             $statusFeedback = $false
-            Write-Log "|--Test-AuthenticationToAVS - Jumpbox VM managed udentity could not be assigned on AVS with in $maxWaitTime minutes. Most probably that portion has failed. Please verify manually!"
+            Write-Log "|--Test-AuthenticationToAVS - Jumpbox VM managed identity could not be assigned on AVS with in $maxWaitTime minutes. Most probably that portion has failed. Please verify manually!"
             Write-Log "|--Test-AuthenticationToAVS - Waited more than $maxWaitTime minutes, but Azure CLI is not able to authenticate to AVS via Jumpbox VM managed identity. Make sure Jumpbox VM has MI and assigned on AVS resource with contributor permission."
             break
         }
