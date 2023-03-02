@@ -69,6 +69,7 @@ function Install-Applications {
     #Optional
     #choco install vscode -y
     #choco install microsoftazurestorageexplorer -y
+    #choco install microsoft-windows-terminal -y
 
     #refreshenv
 
