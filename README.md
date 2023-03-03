@@ -5,6 +5,7 @@ This repo has all necessary scripts and artifacts that you need to deploy AVS La
 > Nested virtualization is not supported by neither VMware nor Microsoft. It's used here for the sake of testing certain scenarios in Lab environment.
 
 ## Background
+
 Deploying Azure VMware Solution (AVS) in Azure is feasible through multiple mechanisms (Portal/CLI/PowerShell). However, that alone is not enough to practice various exercises to become familiar with the service capabilities. There is a need for an on-premises VMware environment that has connectivity to the AVS private cloud. This, in fact, has been challenging to afford for the purpose of skilling as those resources typically cannot be provisioned on-demand for training or skilling purposes.
 
 To address this issue, AVS Nested Labs has been introduced. It provides organizations and experts with a solution to overcome the challenge of not having an on-premises VMware-based environment for testing and skilling exercises to become more familiar with AVS. It is a fully-featured and isolated environment.
@@ -13,20 +14,21 @@ With AVS Nested Labs, you can set up a virtual environment that is similar to on
 
 Thus, the solution was to create automation package that will deploy AVS based on Enterprise Scale for Landing Zone templates and run PowerShell scripts that can provision **nested labs** within AVS Private Cloud to server the purpose of on-premises environment.
 
+## Instructions
 
-## Prerequisites
+### Prerequisites
 
   1) Azure CLI: You can download it from [here](http://aka.ms/azurecli).
   2) AVS 3-Node Quota available in an Azure Subscription.
 
 ### Before you deploy
- 
+
   1) Decide if you want to deploy a [single](./bicep/ESLZDeploy.Single.LAB.deploy.bicep) AVS Private Cloud (SDDC) , or [multiple](./bicep/ESLZDeploy.LAB.deploy.bicep) AVS Private Clouds.
   2) Review the parameters file, that corresponds to your deployment, to make sure you have the right parameters for the deployment. In other words, this depends if you are just deploying a single AVS Private Cloud (SDDC) or multiple ones.
   3) Based on your choice, you can use the instructions in the section below to kick-off the deployment.
 
+### Deployment
 
-## Deployment
 Here are the steps you need to take to deploy AVS Lab with nested VMware lab environments.
 
 1. [Clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository.
@@ -68,6 +70,34 @@ Here are the steps you need to take to deploy AVS Lab with nested VMware lab env
    ```
 
 For a reference to az deployment command, see [this](https://learn.microsoft.com/en-us/cli/azure/deployment/sub?view=azure-cli-latest#az-deployment-sub-create)
+
+## What if I already have AVS deployed? Can I just provision the nested lab/s?
+
+Yes, you can! 💡
+
+### What you will need?
+
+1) AVS Private Cloud.
+2) Jumpbox that can reach out to AVS.
+3) System Assigned Managed Identity enabled on the Jumpbox.
+4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
+5) Download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
+
+### How to execute?
+
+1) Open Command Prompt (cmd.exe).
+2) Change directory to C:\Temp by running: cd c:\temp
+3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt
+4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
+
+```powershell
+powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
+```
+
+5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in C:\Temp directory.
+
+### How can I troubleshoot the execution?
+See the troubleshooting section above >> TODO
 
 ## Disclaimer
 
