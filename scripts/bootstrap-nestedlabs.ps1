@@ -91,6 +91,22 @@ function Test-AuthenticationToAVS {
     return $statusFeedback
 }
 
+function Test-AvailableDiskSpace {
+
+    $drive = Get-PSDrive C
+    $requiredSpace = 15
+    $freeSpaceGB = [math]::Round(($drive.Free / 1GB), 2)
+
+    if ($freeSpaceGB -lt $requiredSpace) {
+        Write-Log "Test-AvailableDiskSpace - C drive has less than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
+        return $false
+    }
+    else {
+        Write-Log "Test-AvailableDiskSpace - C drive has more than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
+        return $true
+    }
+}
+
 function Test-AVSReadiness {
     [void] (az login --identity)
     [void] (az config set extension.use_dynamic_install=yes_without_prompt)
@@ -179,10 +195,12 @@ function Set-NestedLabPackage {
         
         Set-Location $TempPath
 
-        Write-Log "|--Set-NestedLabPackage - Extracting '$ZipPath'"
-
-        #Extract zip file using 7zip
-        7z x $ZipPath -o*
+        #Checking if there is enough diskspace before extracting the file
+        if (Test-AvailableDiskSpace) {
+            #Extracting Lab Package (zip) using 7zip
+            Write-Log "|--Set-NestedLabPackage - Extracting '$ZipPath'"
+            7z x $ZipPath -o*
+        }
 
         #Downloading latest version of labdeploy.ps1
         $NestedLabScriptPath = $ExtractionPath + "\" + $NestedLabScriptURL.Split('/')[-1]
