@@ -82,19 +82,24 @@ Yes, you can! 💡
 3) System Assigned Managed Identity enabled on the Jumpbox.
 4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
 5) Download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
+   You can run the command below from Command Prompt to download **boostrap.ps1**:
+
+```powershell
+powershell.exe -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\ -Name Temp -ItemType Directory -ErrorAction Ignore; Invoke-WebRequest -Uri https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1 -OutFile C:\Temp\bootstrap.ps1; Unblock-File -Path C:\Temp\bootstrap.ps1"
+```
 
 ### How to execute?
 
 1) Open Command Prompt (cmd.exe).
-2) Change directory to C:\Temp by running: cd c:\temp
-3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt
+2) Change directory to C:\Temp by running: cd c:\Temp
+3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
 4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
 
 ```powershell
 powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
 ```
 
-5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in C:\Temp directory.
+5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
 
 ### How can I troubleshoot the execution?
 See the troubleshooting section above >> TODO
