@@ -585,10 +585,13 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
                 "gateway_address":"$gatewayaddress"
             }
         ],
-        "connectivity_path": "/infra/tier-1s/$t1Name",
-        "transport_zone_path": "/infra/sites/default/enforcement-points/default/transport-zones/$tzoneOverlayID"
+        "connectivity_path": "/infra/tier-1s/$t1Name"
     }
 "@
+ 
+    # the following was removed from the $Body content above
+    # ,
+    #"transport_zone_path": "/infra/sites/default/enforcement-points/default/transport-zones/$tzoneOverlayID"
 
     $patchSegmentURL = "https://$nsxtHost/policy/api/v1/infra/tier-1s/$t1Name/segments/" + $segmentName
     $segmentCreation = Invoke-RestMethod -Uri $patchSegmentURL -Headers $Header -Method Patch -Body $Body -ContentType "application/json" -SkipCertificateCheck
