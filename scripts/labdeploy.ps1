@@ -81,7 +81,7 @@ $VIServer = $config.AVSvCenter.IP
 $VIUsername = $config.AVSvCenter.Username
 $VIPassword = $config.AVSvCenter.Password
 
-Write-Log "NSX-T Host: $VIServer"
+Write-Log "vCenter Host: $VIServer"
 
 # NSX-T Server Variables
 $nsxtHost = $config.AVSNSXT.IP
