@@ -1,12 +1,8 @@
-# Author: Roberto Canton
-# rcanton@microsoft.com
-# GPSUS Solution Architect
-# Website: www.avshub.io
 # Credits to:
 # William Lam - VMware
 # Website: www.williamlam.com
-# Husam Hilal - Microsoft
-# Website: www.husamhilal.com
+# Roberto Canton & Husam Hilal - Microsoft GPS US
+# Website: www.avshub.io
 
 param (
     [Parameter(Mandatory)]
