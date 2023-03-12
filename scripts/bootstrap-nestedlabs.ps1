@@ -98,11 +98,11 @@ function Test-AvailableDiskSpace {
     $freeSpaceGB = [math]::Round(($drive.Free / 1GB), 2)
 
     if ($freeSpaceGB -lt $requiredSpace) {
-        Write-Log "Test-AvailableDiskSpace - C drive has less than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
+        Write-Log "|--Test-AvailableDiskSpace - C drive has less than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
         return $false
     }
     else {
-        Write-Log "Test-AvailableDiskSpace - C drive has more than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
+        Write-Log "|--Test-AvailableDiskSpace - C drive has more than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
         return $true
     }
 }
