@@ -42,6 +42,12 @@ param BootstrapPath string = 'https://raw.githubusercontent.com/Azure/Enterprise
 @description('Path to AVS ESLZ Template')
 param ESLZTemplate string = 'https://raw.githubusercontent.com/Azure/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/ARM/ESLZDeploy.deploy.json'
 
+@description('Decision to deploy HCX or not')
+param DeployHCX bool = false
+
+@description('Decision to deploy SRM or not')
+param DeploySRM bool = false
+
 @description('Nested Deployment')
 resource MultipleSDDCDeployment 'Microsoft.Resources/deployments@2021-04-01' = [for i in range(1, NumberOfAVSInstances): {
   name: '${Prefix}-${i}-LAB-Deployment-${uniqueString(Prefix, BootstrapPath)}'
@@ -72,8 +78,8 @@ resource MultipleSDDCDeployment 'Microsoft.Resources/deployments@2021-04-01' = [
       JumpboxSubnet: { value: '10.2${padLeft(i, 2, '0')}.20.192/26' }
       BastionSubnet: { value: '10.2${padLeft(i, 2, '0')}.30.192/26' }
       VNetExists: { value: false }
-      DeployHCX: { value: true }
-      DeploySRM: { value: false }
+      DeployHCX: { value: DeployHCX }
+      DeploySRM: { value: DeploySRM }
       VRServerCount: { value: 1 }
     }
   }
