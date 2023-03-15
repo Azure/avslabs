@@ -6,13 +6,13 @@
             "value": 1
         },
         "NumberOfNestedLabsInAVS":{
-            "value": 12
+            "value": 6
         },
         "Prefix": {
-            "value": "GPSUS-TESTX"
+            "value": "GPSUS-TEST"
         },
         "Location": {
-            "value": "brazilsouth"
+            "value": "<--region-->"
         },
         "AlertEmails": {
             "value": [
@@ -30,6 +30,12 @@
         },
         "ESLZTemplate": {
             "value": "https://raw.githubusercontent.com/husamhilal/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/ARM/ESLZDeploy.deploy.json"
+        },
+        "DeployHCX":{
+            "value": false
+        },
+        "DeploySRM":{
+            "value": false
         }
     }
 }
