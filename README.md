@@ -109,13 +109,19 @@ You may want to clean nested labs as they could have already consumed and you wo
 
 1) Go to **vCenter** Portal -> **Inventory** view, then find the 'NestedLabs' **Resource Pool**.
 2) Right click on the desired nested lab **vApp**. And **Power Off** all VMs that resides inside the **vApp**.
+
    ![screenshot](images/cleanup-nestedlabs.png)
+
 3) Delete the nested lab vApp; right-click and choose **Delete from Disk**.
+
    ![screenshot](images/cleanup-nestedlabs-vapp.png)
-4) Delete the Resource Pool 'NestedLabs'
+
+4) Delete the Resource Pool 'NestedLabs'.
+
    ![screenshot](images/cleanup-nestedlabs-rp.png)
+
 5) Go to NSX-T Portal -> Go to Segments.
-6) Delete any segments created for the NestedLabs (i.e.: Group-1-1-**NestedLab**)
+6) Delete any segments created for the NestedLabs (i.e.: Group-1-1-**NestedLab**).
 
 ## Disclaimer
 
