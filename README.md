@@ -101,8 +101,21 @@ powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 
 
 5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
 
-### How can I troubleshoot the execution?
-See the troubleshooting section above >> TODO
+## Troubleshoot
+
+### How to delete nested labs?
+
+You may want to clean nested labs as they could have already consumed and you would like to start from scratch without redeploying AVS Private Cloud, or deploying the nested labs could have failed while you are deploying them, so you need to clean failed labs and start over. Here are the steps to do so:
+
+1) Go to **vCenter** Portal -> **Inventory** view, then find the 'NestedLabs' **Resource Pool**.
+2) Right click on the desired nested lab **vApp**. And **Power Off** all VMs that resides inside the **vApp**.
+   ![screenshot](images/cleanup-nestedlabs.png)
+3) Delete the nested lab vApp; right-click and choose **Delete from Disk**.
+   ![screenshot](images/cleanup-nestedlabs-vapp.png)
+4) Delete the Resource Pool 'NestedLabs'
+   ![screenshot](images/cleanup-nestedlabs-rp.png)
+5) Go to NSX-T Portal -> Go to Segments.
+6) Delete any segments created for the NestedLabs (i.e.: Group-1-1-**NestedLab**)
 
 ## Disclaimer
 
