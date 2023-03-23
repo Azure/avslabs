@@ -475,7 +475,7 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
             "nd_snooping_enabled": false,
             "nd_snooping_limit": 3
             },
-            "dhcp_snooping_v6_enabled": true,
+            "dhcp_snooping_v6_enabled": false,
             "vmtools_v6_enabled": false
         },
         "tofu_enabled": true,
