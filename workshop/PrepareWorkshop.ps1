@@ -1,7 +1,7 @@
 ###################################################################################################################################################
 
-# Create or Delete users for GPSUS Workshop
-
+# Create or Delete Group Accounts in Azure AD
+#region Create/Delete Group Accounts in Azure AD
 function Initialize-GroupAccounts {
 
     param (
@@ -54,18 +54,26 @@ Initialize-GroupAccounts -AccountPrefix "GPSUS-Group" -NumberOfGroups 10 -Operat
 Initialize-GroupAccounts -AccountPrefix "GPS-Group" -NumberOfGroups 10 -Operation "Create"
 Initialize-GroupAccounts -AccountPrefix "GPS-Group" -NumberOfGroups 10 -Operation "Delete"
 #>
+
+#endregion
+
 ###################################################################################################################################################
 ###################################################################################################################################################
 
-# Create Group Accounts, Assign Roles for Group user accounts on Azure Resource Groups for GPSUS Workshop, and Delete Group Accounts
+# Create Group Accounts, Assign Roles Permissions for Group user accounts on Azure Resource Groups for Workshop, and Delete Group Accounts
+#region Create Group Accounts, Assign Roles Permissions for Group user accounts on Azure Resource Groups for Workshop, and Delete Group Accounts
 
 function Get-SubscriptionId {
 
+    <#
     $subsList = az account subscription list
     $subsListString = [system.String]::Join(" ", $subsList)
     $subsListJson = ConvertFrom-Json $subsListString
     #$subsListJson[0].id
     return $subsListJson[0].id
+    #>
+    
+    return $(az account subscription list --query "[0].id" --output tsv)
 }
 
 function Set-GroupAccountsPermissionsAndPasswords {
@@ -104,63 +112,63 @@ function Set-GroupAccountsPermissionsAndPasswords {
     if ($DeleteAccounts) {
         Initialize-GroupAccounts -AccountPrefix $AccountPrefix -NumberOfGroups $NumberOfLabs -Operation "Delete"
     }
+    else {
 
-    $ResourceGroupSuffix = "PrivateCloud", "Operational", "Network", "Jumpbox"
+        $ResourceGroupSuffix = "PrivateCloud", "Operational", "Network", "Jumpbox"
     
-    #Check if number of labs is even. If it's odd, the logic will not proceed.
-    if ($NumberOfLabs % 2 -eq 0) {
+        #Check if number of labs is even. If it's odd, the logic will not proceed.
+        if ($NumberOfLabs % 2 -eq 0) {
 
-        $numbers = 1..$NumberOfLabs
+            $numbers = 1..$NumberOfLabs
 
-        $subId = Get-SubscriptionId
+            $subId = Get-SubscriptionId
 
-        $pairs = @()
-        for ($i = 0; $i -lt $numbers.Count; $i += 2) {
-            if ($i + 1 -lt $numbers.Count) {
-                $pairs += , @($numbers[$i], $numbers[$i + 1])
-            }
-        }
-
-        Write-Host "Number of Group Pairs:" $pairs.Count
-
-        foreach ( $pair in $pairs ) {
-            foreach ($x in $pair) {
-                Write-Host
-                Write-Host Group $x
-                $accountId = $AccountPrefix + $x + "@vmwaresales101outlook.onmicrosoft.com"
-                $accountPassword = $PasswordPrefix + $x + "-AVS!"
-                Write-Host $accountId
-            
-                if ($CreateAccounts -or $ResetPasswords) {
-                    #Resetting Group Accounts Passwords
-                    Write-Host "Resetting account password with provided password prefix."
-                    az ad user update --id $accountId --password $accountPassword --force-change-password-next-sign-in false
+            $pairs = @()
+            for ($i = 0; $i -lt $numbers.Count; $i += 2) {
+                if ($i + 1 -lt $numbers.Count) {
+                    $pairs += , @($numbers[$i], $numbers[$i + 1])
                 }
+            }
 
-                #Assiging permessions for the Group Accounts over Azure Resource Groups for each AVS Lab Environment
-                foreach ($y in $pair) {
-                    #Write-Host $x $y
-                    Write-Host "Assigning Contributor Role for account $accountId on Group$y's Azure Resources"
+            Write-Host "Number of Group Pairs:" $pairs.Count
+
+            foreach ( $pair in $pairs ) {
+                foreach ($x in $pair) {
+                    Write-Host
+                    Write-Host Group $x
+                    $accountId = $AccountPrefix + $x + "@vmwaresales101outlook.onmicrosoft.com"
+                    $accountPassword = $PasswordPrefix + $x + "-AVS!"
+                    Write-Host $accountId
+            
+                    if ($CreateAccounts -or $ResetPasswords) {
+                        #Resetting Group Accounts Passwords
+                        Write-Host "Resetting account password with provided password prefix."
+                        az ad user update --id $accountId --password $accountPassword --force-change-password-next-sign-in false
+                    }
+
+                    #Assiging permessions for the Group Accounts over Azure Resource Groups for each AVS Lab Environment
+                    foreach ($y in $pair) {
+                        #Write-Host $x $y
+                        Write-Host "Assigning Contributor Role for account $accountId on Group$y's Azure Resources"
                     
-                    #Start-Job -ScriptBlock {
+                        #Start-Job -ScriptBlock {
                         foreach ($rgsfx in $ResourceGroupSuffix) {
                             $scope = $subId + "/resourceGroups/" + $Prefix + $y + "-" + $rgsfx
                             #Write-Host $scope
                             [void] (az role assignment create --assignee $accountId --role "Contributor" --scope $scope)
                         }
-                    #}
-                }
+                        #}
+                    }
             
-            }
+                }
 
+            }
+        }
+        else {
+            Write-Host "Number of Labs is odd ( " + $pairs.Count + " ). Unable to create lab pairs!"
         }
     }
-    else {
-        Write-Host "Number of Labs is odd ( " + $pairs.Count + " ). Unable to create lab pairs!"
-    }
-
     Write-Host "Script Ended"
-
 }
 
 ###################################################################################################################################################
@@ -168,18 +176,21 @@ function Set-GroupAccountsPermissionsAndPasswords {
 ###################################################################################################################################################
 
 #Run when workshop starts
-Set-GroupAccountsPermissionsAndPasswords -Prefix "GPSUS-TEST-" -AccountPrefix "GPS-Group" -PasswordPrefix "XYZ" -NumberOfLabs 2 #-CreateAccounts
+#Set-GroupAccountsPermissionsAndPasswords -Prefix "GPSUS-TEST-" -AccountPrefix "GPS-Group" -PasswordPrefix "XYZ" -NumberOfLabs 4 #-CreateAccounts
 
 #Run after workshop ends
-Set-GroupAccountsPermissionsAndPasswords -AccountPrefix "GPS-Group" -NumberOfLabs 10 -DeleteAccounts
+#Set-GroupAccountsPermissionsAndPasswords -AccountPrefix "GPS-Group" -NumberOfLabs 10 -DeleteAccounts
 
-###################################################################################################################################################
+#endregion
+
 ###################################################################################################################################################
 ###################################################################################################################################################
 
 # Recycle one Group Account, Assign Roles for that Group user account on Azure Resource Groups for GPSUS Workshop
+#region Recycle Group Account
+
 # This helps in case a user setup MFA for the account
-function Set-GroupAccountPermissionsAndPassword {
+function Reset-GroupAccountPermissionsAndPassword {
     param (
         [Parameter(Mandatory = $true)]
         [String]$Prefix,
@@ -223,11 +234,11 @@ function Set-GroupAccountPermissionsAndPassword {
 
         Write-Host "Assigning Contributor Role for Account $upn on Group$y Azure Resource"
         
-        Start-Job -ScriptBlock {
+        #Start-Job -ScriptBlock {
             foreach ($rgsfx in $ResourceGroupSuffix) {
                 [void] (az role assignment create --assignee $upn --role "Contributor" --resource-group $Prefix$y"-"$rgsfx)
             }
-        }
+        #}
     }
 
     Write-Host "Script Ended"
@@ -237,23 +248,52 @@ function Set-GroupAccountPermissionsAndPassword {
 # Execution Examples:
 ###################################################################################################################################################
 
-# Set-GroupAccountPermissionsAndPassword -Prefix "<Resources-Prefix>" -AccountPrefix "<Group-Account-Number>" -AccountNumber <Group-Number> -Password "<Password-Value>" -FirstLab <lab1> -SecondLab <lab2>
+# Reset-GroupAccountPermissionsAndPassword -Prefix "<Resources-Prefix>" -AccountPrefix "<Group-Account-Number>" -AccountNumber <Group-Number> -Password "<Password-Value>" -FirstLab <lab1> -SecondLab <lab2>
 
-Set-GroupAccountPermissionsAndPassword -Prefix "GPSUS-XYZ-" -AccountPrefix "GPSUS-Group" -AccountNumber 3 -Password "TYICsdY@#$%gghhhj24545" -FirstLab 3 -SecondLab 4
+# Reset-GroupAccountPermissionsAndPassword -Prefix "GPSUS-XYZ-" -AccountPrefix "GPSUS-Group" -AccountNumber 3 -Password "TYICsdY@#$%gghhhj24545" -FirstLab 3 -SecondLab 4
+
+#endregion
 
 ###################################################################################################################################################
 ###################################################################################################################################################
 
 # Delete Azure Resource Groups and their Resources
+#region Delete Azure Resource Groups and their Resources
 
-$prefix = "GPSUS-XYZ-"
-$startFromLab = 1
-$numberOfLabs = 6
-for ($i = $startFromLab; $i -le $numberOfLabs; $i++) {
-    az group delete --no-wait --yes --name $prefix$i-PrivateCloud
-    az group delete --no-wait --yes --name $prefix$i-Operational
-    az group delete --no-wait --yes --name $prefix$i-Network
-    az group delete --no-wait --yes --name $prefix$i-Jumpbox --force-deletion-types Microsoft.Compute/virtualMachines
+function Remove-WorkshopLabAzureResources {
+    param (
+        [Parameter()]
+        [String]$Prefix,
 
-    Write-Host "Resources for $prefix$i deleted successfully"  -ForegroundColor Green
+        [Parameter()]
+        [ValidateRange(1,[int]::MaxValue)]
+        [Int]$FirstLabNumber = 1,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateRange(1,[int]::MaxValue)]
+        [Int]$NumberOfLabs
+    )
+    
+    for ($i = $FirstLabNumber; $i -le $NumberOfLabs; $i++) {
+        az group delete --no-wait --yes --name $Prefix$i-PrivateCloud
+        az group delete --no-wait --yes --name $Prefix$i-Operational
+        az group delete --no-wait --yes --name $Prefix$i-Network
+        az group delete --no-wait --yes --name $Prefix$i-Jumpbox --force-deletion-types Microsoft.Compute/virtualMachines
+
+        Write-Host "Resources for $Prefix$i deleted successfully"  -ForegroundColor Green
+    }
 }
+
+
+###################################################################################################################################################
+# Execution Examples:
+###################################################################################################################################################
+
+#Remove-WorkshopLabAzureResources -Prefix "GPSUS-XYZ-" -FirstLabNumber 1 -NumberOfLabs 6
+
+###################################################################################################################################################
+
+#endregion
+
+###################################################################################################################################################
+###################################################################################################################################################
