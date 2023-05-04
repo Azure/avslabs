@@ -44,17 +44,29 @@ function Initialize-GroupAccounts {
 ###################################################################################################################################################
 
 #GPSUS-Group
+<#
 Initialize-GroupAccounts -AccountPrefix "GPSUS-Group" -NumberOfGroups 10 -Operation "Create"
 Initialize-GroupAccounts -AccountPrefix "GPSUS-Group" -NumberOfGroups 10 -Operation "Delete"
+#>
 
 #GPS-Group
+<#
 Initialize-GroupAccounts -AccountPrefix "GPS-Group" -NumberOfGroups 10 -Operation "Create"
 Initialize-GroupAccounts -AccountPrefix "GPS-Group" -NumberOfGroups 10 -Operation "Delete"
-
+#>
 ###################################################################################################################################################
 ###################################################################################################################################################
 
 # Create Group Accounts, Assign Roles for Group user accounts on Azure Resource Groups for GPSUS Workshop, and Delete Group Accounts
+
+function Get-SubscriptionId {
+
+    $subsList = az account subscription list
+    $subsListString = [system.String]::Join(" ", $subsList)
+    $subsListJson = ConvertFrom-Json $subsListString
+    #$subsListJson[0].id
+    return $subsListJson[0].id
+}
 
 function Set-GroupAccountsPermissionsAndPasswords {
     param (
@@ -73,6 +85,9 @@ function Set-GroupAccountsPermissionsAndPasswords {
    
         [Parameter()]
         [switch] $CreateAccounts = $false,
+
+        [Parameter()]
+        [switch] $ResetPasswords = $false,
 
         [Parameter()]
         [switch] $DeleteAccounts = $false
@@ -97,6 +112,8 @@ function Set-GroupAccountsPermissionsAndPasswords {
 
         $numbers = 1..$NumberOfLabs
 
+        $subId = Get-SubscriptionId
+
         $pairs = @()
         for ($i = 0; $i -lt $numbers.Count; $i += 2) {
             if ($i + 1 -lt $numbers.Count) {
@@ -114,20 +131,24 @@ function Set-GroupAccountsPermissionsAndPasswords {
                 $accountPassword = $PasswordPrefix + $x + "-AVS!"
                 Write-Host $accountId
             
-                #Resetting Group Accounts Passwords
-                Write-Host "Resetting password with provided password prefix "
-                az ad user update --id $accountId --password $accountPassword --force-change-password-next-sign-in false
+                if ($CreateAccounts -or $ResetPasswords) {
+                    #Resetting Group Accounts Passwords
+                    Write-Host "Resetting account password with provided password prefix."
+                    az ad user update --id $accountId --password $accountPassword --force-change-password-next-sign-in false
+                }
 
                 #Assiging permessions for the Group Accounts over Azure Resource Groups for each AVS Lab Environment
                 foreach ($y in $pair) {
                     #Write-Host $x $y
-                    Write-Host Assigning Contributor Role for GPSUS-Group$x Account on Group$y Azure Resource
-                        
-                    Start-Job -ScriptBlock {
+                    Write-Host "Assigning Contributor Role for account $accountId on Group$y's Azure Resources"
+                    
+                    #Start-Job -ScriptBlock {
                         foreach ($rgsfx in $ResourceGroupSuffix) {
-                            [void] (az role assignment create --assignee $accountId --role "Contributor" --resource-group $Prefix$y"-"$rgsfx)
+                            $scope = $subId + "/resourceGroups/" + $Prefix + $y + "-" + $rgsfx
+                            #Write-Host $scope
+                            [void] (az role assignment create --assignee $accountId --role "Contributor" --scope $scope)
                         }
-                    }
+                    #}
                 }
             
             }
@@ -147,7 +168,7 @@ function Set-GroupAccountsPermissionsAndPasswords {
 ###################################################################################################################################################
 
 #Run when workshop starts
-Set-GroupAccountsPermissionsAndPasswords -Prefix "GPSUS-XYZ-" -AccountPrefix "GPS-Group" -PasswordPrefix "XYZ" -NumberOfLabs 10 -CreateAccounts
+Set-GroupAccountsPermissionsAndPasswords -Prefix "GPSUS-TEST-" -AccountPrefix "GPS-Group" -PasswordPrefix "XYZ" -NumberOfLabs 2 #-CreateAccounts
 
 #Run after workshop ends
 Set-GroupAccountsPermissionsAndPasswords -AccountPrefix "GPS-Group" -NumberOfLabs 10 -DeleteAccounts
