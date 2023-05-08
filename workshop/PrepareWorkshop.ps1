@@ -176,11 +176,14 @@ function Set-GroupAccountsPermissionsAndPasswords {
 ###################################################################################################################################################
 
 #Run when workshop starts
-#Set-GroupAccountsPermissionsAndPasswords -Prefix "GPSUS-TEST-" -AccountPrefix "GPS-Group" -PasswordPrefix "XYZ" -NumberOfLabs 4 #-CreateAccounts
+#Set-GroupAccountsPermissionsAndPasswords -Prefix "GPSUS-TEST-" -AccountPrefix "GPSUS-Group" -PasswordPrefix "XYZ" -NumberOfLabs 4 -CreateAccounts
+#or
+#Set-GroupAccountsPermissionsAndPasswords -Prefix "GPSUS-TEST-" -AccountPrefix "GPS-Group" -PasswordPrefix "XYZ" -NumberOfLabs 4 -CreateAccounts
 
 #Run after workshop ends
-#Set-GroupAccountsPermissionsAndPasswords -AccountPrefix "GPS-Group" -NumberOfLabs 10 -DeleteAccounts
-
+#Set-GroupAccountsPermissionsAndPasswords -AccountPrefix "GPSUS-Group" -NumberOfLabs 4 -DeleteAccounts
+#or
+#Set-GroupAccountsPermissionsAndPasswords -AccountPrefix "GPS-Group" -NumberOfLabs 4 -DeleteAccounts
 #endregion
 
 ###################################################################################################################################################

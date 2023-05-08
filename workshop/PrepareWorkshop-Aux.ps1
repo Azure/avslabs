@@ -37,6 +37,28 @@ $resultsTable | Format-Table -AutoSize
 
 ###################################################################################################################################################
 
+# Check AVS Nested Labs Deployments Status
+
+$Prefix = "GPSUS-XYZ-"
+$numberOfLabs = 4
+$resultsTable = @()
+
+for ($i = 1; $i -le $numberOfLabs; $i++) {
+    
+    $name = "$Prefix$i-jumpbox"
+
+    $runCommandResults = az vm run-command invoke --command-id RunPowerShellScript --name $name -g $name --scripts "Get-Content -Path C:\temp\bootstrap-nestedlabs.log -Tail 25" --query "value[*].message"
+    $runCommandResultsString = [system.String]::Join(" ", $runCommandResults)
+    #$runCommandResultsJson = ConvertFrom-Json $runCommandResultsString
+    
+    $resultsTable += [PSCustomObject](@{ VM = $name; status = $runCommandResultsString })
+}
+
+#$resultsTable | Format-Table -AutoSize
+$resultsTable | Export-Csv -Path "results.csv" -NoTypeInformation -Force
+
+###################################################################################################################################################
+
 #Delete Empty Resource Groups
 
 $groups = az group list -o tsv --query [].name
