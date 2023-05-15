@@ -227,6 +227,8 @@ function Reset-GroupAccountPermissionsAndPassword {
 
     Write-Host User $upn recycled with password $password -ForegroundColor Green
 
+    $subId = Get-SubscriptionId
+
     $ResourceGroupSuffix = "PrivateCloud", "Operational", "Network", "Jumpbox"
     
     $pair = @($FirstLab, $SecondLab)
@@ -237,11 +239,11 @@ function Reset-GroupAccountPermissionsAndPassword {
 
         Write-Host "Assigning Contributor Role for Account $upn on Group$y Azure Resource"
         
-        #Start-Job -ScriptBlock {
-            foreach ($rgsfx in $ResourceGroupSuffix) {
-                [void] (az role assignment create --assignee $upn --role "Contributor" --resource-group $Prefix$y"-"$rgsfx)
-            }
-        #}
+        foreach ($rgsfx in $ResourceGroupSuffix) {
+            $scope = $subId + "/resourceGroups/" + $Prefix + $y + "-" + $rgsfx
+            #Write-Host $scope
+            [void] (az role assignment create --assignee $accountId --role "Contributor" --scope $scope)
+        }
     }
 
     Write-Host "Script Ended"
