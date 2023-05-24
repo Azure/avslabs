@@ -13,6 +13,7 @@ param (
 # constant variables
 $Logfile = "C:\temp\bootstrap.log"
 $TempPath = "C:\temp"
+$MainBootstrapScriptURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1"
 $BootstrapScriptURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap-nestedlabs.ps1"
 $PackageURL = "https://gpsusstoragepremium.blob.core.windows.net/avs-embedded-labs/avs-embedded-labs-auto.zip"
 #$NumberOfNestedLabs = 6
@@ -77,6 +78,17 @@ function Install-Applications {
 }
 
 function Get-BootstrapScript {
+
+    $MainBootstrapPackagePath = $TempPath + "\" + $MainBootstrapScriptURL.Split('/')[-1]
+    
+    if (Test-Path $MainBootstrapPackagePath -PathType Leaf) {
+        Write-Log "|--Get-BootstrapScript - Nested labs bootstrap script 'bootstrap.ps1' already exists"
+    }else {
+        Write-Log "|--Get-BootstrapScript - Downloading nested labs bootstrap script 'bootstrap.ps1'"
+        Start-BitsTransfer -Source $MainBootstrapScriptURL -Destination $TempPath -Priority High
+    }
+
+    #----------------------------------------------------------------------------------------------------------------------#
 
     $BootstrapPackagePath = $TempPath + "\" + $BootstrapScriptURL.Split('/')[-1]
 
