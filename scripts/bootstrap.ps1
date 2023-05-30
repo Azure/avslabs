@@ -7,7 +7,11 @@ param (
     [Parameter()]
     [ValidateRange(1, 32)]
     [Alias("Labs")]
-    [Int] $NumberOfNestedLabs = 6
+    [Int] $NumberOfNestedLabs = 6,
+
+    [Parameter()]
+    [Alias("IsAzureGovernment")] 
+    [switch] $isMAG = $false
 )
 
 # constant variables
@@ -105,6 +109,10 @@ function Set-BootstrapScheduledTask {
     $filePath = "c:\temp\bootstrap-nestedlabs.ps1"
     
     $scriptParams = "-GroupId " + $GroupNumber + " -Labs " + $NumberOfNestedLabs
+
+    if($isMAG){
+        $scriptParams+= " -isMAG"
+    }
 
     $workingDirectory = "c:\temp"
 
