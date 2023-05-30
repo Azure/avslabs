@@ -7,7 +7,11 @@ param (
     [Parameter()]
     [ValidateRange(1, 32)]
     [Alias("Labs")]
-    [Int] $NumberOfNestedLabs = 4
+    [Int] $NumberOfNestedLabs = 4,
+
+    [Parameter()]
+    [Alias("IsAzureGovernment")] 
+    [switch] $isMAG = $false
 )
 
 # constant variables
@@ -360,6 +364,11 @@ function Complete-NestedLabDeployment {
 Write-Log " "
 Write-Log "#---===---===---===---===---===---===---===---===---===---===---===---===---===---#"
 Write-Log "Starting Execution"
+
+if ($isMAG){
+    Write-Log "Setting Cloud to Azure Government Cloud"
+    az cloud set --name AzureUsGovernment
+}
 
 Write-Log "Setting basic requirements for labdeploy.ps1 script (i.e.: installing PowerShell modules: VMware.PowerCLI)"
 if (Set-NestedLabRequirement) {
