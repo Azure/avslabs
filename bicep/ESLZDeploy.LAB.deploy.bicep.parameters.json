@@ -16,7 +16,7 @@
         },
         "AlertEmails": {
             "value": [
-                "husam.hilal@microsoft.com"
+                "<--email-address-->"
             ]
         },
         "JumpboxSku": {
@@ -32,7 +32,7 @@
             "value": "https://raw.githubusercontent.com/husamhilal/Enterprise-Scale-for-AVS/main/AVS-Landing-Zone/GreenField/ARM/ESLZDeploy.deploy.json"
         },
         "DeployHCX":{
-            "value": true
+            "value": false
         },
         "DeploySRM":{
             "value": false
