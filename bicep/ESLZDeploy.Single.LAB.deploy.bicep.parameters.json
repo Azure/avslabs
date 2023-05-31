@@ -16,7 +16,7 @@
         },
         "AlertEmails": {
             "value": [
-                "husam.hilal@microsoft.com"
+                "<--email-address-->"
             ]
         },
         "JumpboxSku": {
