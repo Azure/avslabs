@@ -19,7 +19,7 @@ $Logfile = "C:\temp\bootstrap.log"
 $TempPath = "C:\temp"
 $MainBootstrapScriptURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1"
 $BootstrapScriptURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap-nestedlabs.ps1"
-$PackageURL = "https://gpsusstoragepremium.blob.core.windows.net/avs-embedded-labs/avs-embedded-labs-auto.zip"
+$PackageURL = "https://avslabspremium.blob.core.windows.net/vmware-nested-lab/avs-embedded-labs-auto.zip"
 #$NumberOfNestedLabs = 6
 
 # initializing
