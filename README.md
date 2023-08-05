@@ -18,14 +18,18 @@ Thus, the solution was to create automation package that will deploy AVS based o
 
 ### Prerequisites
 
-  1) Azure CLI: You can download it from [here](http://aka.ms/azurecli).
-  2) AVS 3-Node Quota available in an Azure Subscription.
+1. Azure CLI: You can download it from [here](http://aka.ms/azurecli).
+2. AVS 3-Node Quota available in an Azure Subscription.
+3. Permissions, one of the following:
+   - Azure RBAC role: **Owner** at Azure Subscrioption level (scope).
+   - Azure RBAC roles: **Contributor** and **User Access Administrator** at Azure Subscrioption level (scope).
+   - Deploy AVS seperately, highly recommended through [AVS Accelerator](https://aka.ms/avsenterprisescalerepo), then jump to this [section](#what-if-i-already-have-avs-deployed-can-i-just-provision-the-nested-labs).
 
 ### Before you deploy
 
-  1) Decide if you want to deploy a [single](./bicep/ESLZDeploy.Single.LAB.deploy.bicep) AVS Private Cloud (SDDC) , or [multiple](./bicep/ESLZDeploy.LAB.deploy.bicep) AVS Private Clouds.
-  2) Review the parameters file, that corresponds to your deployment, to make sure you have the right parameters for the deployment. In other words, this depends if you are just deploying a single AVS Private Cloud (SDDC) or multiple ones.
-  3) Based on your choice, you can use the instructions in the section below to kick-off the deployment.
+  1. Decide if you want to deploy a [single](./bicep/ESLZDeploy.Single.LAB.deploy.bicep) AVS Private Cloud (SDDC) , or [multiple](./bicep/ESLZDeploy.LAB.deploy.bicep) AVS Private Clouds.
+  2. Review the parameters file, that corresponds to your deployment, to make sure you have the right parameters for the deployment. In other words, this depends if you are just deploying a single AVS Private Cloud (SDDC) or multiple ones.
+  3. Based on your choice, you can use the instructions in the section below to kick-off the deployment.
 
 ### Deployment
 
