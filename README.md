@@ -117,6 +117,9 @@ Yes, you can! 💡
       ```
    5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
 
+### What is the final result?
+   The final result should be similar to what you see in the screenshot below. Notice the logs path. Also, notice the the nested lab vCenter IP address (i.e., 10.1.1.2), because GroupNumber was set to 1 and NumberOfNestedLabs was set to 1. ![screenshot](images/final-screenshot.png)
+
 ## Troubleshoot
 
 ### How to delete nested labs?
