@@ -8,11 +8,11 @@ This repo has all necessary scripts and artifacts that you need to deploy AVS La
 
 Deploying Azure VMware Solution (AVS) in Azure is feasible through multiple mechanisms (Portal/CLI/PowerShell). However, that alone is not enough to practice various exercises to become familiar with the service capabilities. There is a need for an on-premises VMware environment that has connectivity to the AVS private cloud. This, in fact, has been challenging to afford for the purpose of skilling as those resources typically cannot be provisioned on-demand for training or skilling purposes.
 
-To address this issue, AVS Nested Labs has been introduced. It provides organizations and experts with a solution to overcome the challenge of not having an on-premises VMware-based environment for testing and skilling exercises to become more familiar with AVS. It is a fully-featured and isolated environment.
-
-With AVS Nested Labs, you can set up a virtual environment that is similar to on-premises environment, without the need for physical hardware, and still be able to perform your tests and exercises in a safe and isolated environment.
+To address this issue, AVS Nested Labs has been introduced. It provides organizations and experts with a solution to overcome the challenge of not having an on-premises VMware-based environment. With AVS Nested Labs, you can set up a virtual environment that is similar to on-premises environment, without the need for physical hardware, and still be able to perform your tests and exercises in a safe and isolated environment.
 
 Thus, the solution was to create automation package that will deploy AVS based on Enterprise Scale for Landing Zone templates and run PowerShell scripts that can provision **nested labs** within AVS Private Cloud to server the purpose of on-premises environment.
+
+![highleveldiagram](images/Lab%20Diagram.png)
 
 ## Instructions
 
@@ -85,25 +85,37 @@ Yes, you can! 💡
 2) Jumpbox that can reach out to AVS.
 3) System Assigned Managed Identity enabled on the Jumpbox.
 4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
-5) Download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
+   ```powershell
+   #Example:
+   
+   $jumpboxVMName = "AVSJumpBox"
+   $avsPrivateCloudName = "AVS-SDDC"
+   
+   $spID=$(az resource list -n $jumpboxVMName --query [*].identity.principalId --out tsv)
+   $avsPrivateCloudId = $(az resource list -n $avsPrivateCloudName  --query [*].id --out tsv)
+   
+   az role assignment create --assignee $spID --role 'Contributor' --scope $avsPrivateCloudId
+   ```
+6) Download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
    You can run the command below from Command Prompt to download **boostrap.ps1**:
 
-```powershell
-powershell.exe -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\ -Name Temp -ItemType Directory -ErrorAction Ignore; Invoke-WebRequest -Uri https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1 -OutFile C:\Temp\bootstrap.ps1; Unblock-File -Path C:\Temp\bootstrap.ps1"
-```
+   ```powershell
+   powershell.exe -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\ -Name Temp -ItemType Directory -ErrorAction Ignore; Invoke-WebRequest -Uri https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1 -OutFile C:\Temp\bootstrap.ps1; Unblock-File -Path C:\Temp\bootstrap.ps1"
+   ```
 
 ### How to execute?
 
-1) Open Command Prompt (cmd.exe).
-2) Change directory to C:\Temp by running: cd c:\Temp
-3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
-4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
-
-```powershell
-powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
-```
-
-5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
+   1) Open Command Prompt (cmd.exe).
+   2) Change directory to C:\Temp by running:
+      ```powershell
+      cd c:\Temp
+      ```
+   3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
+   4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
+      ```powershell
+      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
+      ```
+   5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
 
 ## Troubleshoot
 
