@@ -3,13 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "NumberOfAVSInstances": {
-            "value": 1
+            "value": 5
         },
         "NumberOfNestedLabsInAVS":{
             "value": 6
         },
         "Prefix": {
-            "value": "GPSUS-TEST-"
+            "value": "<--resources-prefix-->"
         },
         "Location": {
             "value": "<--region-->"
