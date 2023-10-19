@@ -9,7 +9,7 @@
             "value": 6
         },
         "Prefix": {
-            "value": "GPSUS-TEST"
+            "value": "<--resources-prefix-->"
         },
         "Location": {
             "value": "<--region-->"

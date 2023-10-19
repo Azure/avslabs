@@ -6,15 +6,15 @@
             "value": 3
         },
         "Prefix": {
-            "value": "GPSUS-WIPRO"
+            "value": "<--resources-prefix-->"
         },
         "Location": {
-            "value": "canadacentral"
+            "value": "<--region-->"
         },
         "AlertEmails": {
             "value": [
-                "husam.hilal@microsoft.com",
-                "rcanton@microsoft.com"
+                "<--email-address1-->",
+                "<--email-address2-->"
             ]
         },
         "JumpboxSku": {

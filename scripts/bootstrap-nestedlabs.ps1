@@ -383,7 +383,6 @@ if (Set-NestedLabRequirement) {
                 if (Test-AVSReadiness) {
                     Write-Log "Enabling outbound Internet access from AVS which is required by labdeploy.ps1 script"
                     if (Enable-AVSPrivateCloudInternetViaSNAT) {
-                        # $NumberOfNestedLabs = 6
                         Write-Log "Executing labdeploy.ps1 script for building $NumberOfNestedLabs nested VMware vSphere labs inside AVS Private Cloud"
                         Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs -AVSInfo $AVSInfo
                     }
