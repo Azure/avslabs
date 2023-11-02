@@ -116,9 +116,9 @@ Yes, you can! 💡
       powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
       ```
 
-      If you are using **Azure Government**, please add **-IsAzureGovernment $true** to the command
+      If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
       ```powershell
-      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -IsAzureGovernment $true
+      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -IsAzureGovernment
       ```
 
    5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
