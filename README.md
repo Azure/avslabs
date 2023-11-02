@@ -112,11 +112,11 @@ Yes, you can! 💡
       ```
    3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
    4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
+      > [!NOTE]
+      > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
       ```powershell
       powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
       ```
-      > [!NOTE]
-      > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
 
    5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
 
