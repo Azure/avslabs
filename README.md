@@ -1,7 +1,7 @@
 # AVS LAB Automation
 
 This repo has all necessary scripts and artifacts that you need to deploy AVS Lab with nested VMware-based environments.
-
+> [!IMPORTANT]
 > Nested virtualization is not supported by neither VMware nor Microsoft. It's used here for the sake of testing certain scenarios in Lab environment.
 
 ## Background
@@ -18,12 +18,12 @@ Thus, the solution was to create automation package that will deploy AVS based o
 
 ### Prerequisites
 
-1. Azure CLI: You can download it from [here](http://aka.ms/azurecli).
+1. Azure CLI: You can download it from [here](https://aka.ms/azurecli).
 2. AVS 3-Node Quota available in an Azure Subscription.
 3. Permissions, one of the following:
-   - Azure RBAC role: **Owner** at Azure Subscrioption level (scope).
-   - Azure RBAC roles: **Contributor** and **User Access Administrator** at Azure Subscrioption level (scope).
-   - Deploy AVS seperately, highly recommended through [AVS Accelerator](https://aka.ms/avsenterprisescalerepo), then jump to this [section](#what-if-i-already-have-avs-deployed-can-i-just-provision-the-nested-labs).
+   - Azure RBAC role: **Owner** at Azure Subscription level (scope).
+   - Azure RBAC roles: **Contributor** and **User Access Administrator** at Azure Subscription level (scope).
+   - Deploy AVS separately, highly recommended through [AVS Accelerator](https://aka.ms/avsenterprisescalerepo), then jump to this [section](#what-if-i-already-have-avs-deployed-can-i-just-provision-the-nested-labs).
 
 ### Before you deploy
 
@@ -48,13 +48,13 @@ Here are the steps you need to take to deploy AVS Lab with nested VMware lab env
    ```
 
 3. Update Parameters File
-
+   > [!NOTE]
    > Make sure to update the the parameter file with the right values, such as: **NumberOfAVSInstances**, **NumberOfNestedLabsInAVS**, **Prefix**, **Location**, **AlertEmails**, etc...
 
 4. Execute the Deployment
 
    **From Azure CLI run the deployment command as in the following examples.**
-
+   > [!NOTE]
    >Make sure to provide the a unique **name** for the deployment, the right **location**, your deployment choice **bicep file** and the corresponding **parameter file**.
 
    ```azurecli
@@ -103,6 +103,7 @@ Yes, you can! 💡
    > Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
 
 4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
+
    ```powershell
    #Example:
    
@@ -119,6 +120,7 @@ Yes, you can! 💡
    }
    
    ```
+
 5) At Jumpbox VM, download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
    You can run the command below from Command Prompt to download **boostrap.ps1**:
 
