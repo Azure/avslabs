@@ -80,10 +80,22 @@ For a reference to az deployment command, see [this](https://learn.microsoft.com
 Yes, you can! 💡
 
 ### What you will need?
-
+> [!NOTE] You can use Azure Cloud Shell to run the script examples in step #2 and #3.
 1) AVS Private Cloud.
 2) Jumpbox that can reach out to AVS.
+
+   ```powershell
+   #Example
+   
+   $jumpboxVMName = "AVSJumpBox"
+   $jumpboxVMResourceGroup = "Management-RG"
+   az vm identity assign -g $jumpboxVMResourceGroup -n $jumpboxVMName
+
+   # $spID=$(az vm identity assign -g $jumpboxVMResourceGroup -n $jumpboxVMName --query systemAssignedIdentity --out tsv)
+   ```
+
 3) System Assigned Managed Identity enabled on the Jumpbox.
+   > [!IMPORTANT] Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
 4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
    ```powershell
    #Example:
@@ -94,9 +106,14 @@ Yes, you can! 💡
    $spID=$(az resource list -n $jumpboxVMName --query [*].identity.principalId --out tsv)
    $avsPrivateCloudId = $(az resource list -n $avsPrivateCloudName  --query [*].id --out tsv)
    
-   az role assignment create --assignee $spID --role 'Contributor' --scope $avsPrivateCloudId
+   if($spID -ne $null) { 
+     az role assignment create --assignee $spID --role 'Contributor' --scope $avsPrivateCloudId
+   } else {
+     Write-Error -Message "The VM does not have System assigned managed identity. Please check previous step!"
+   }
+   
    ```
-6) Download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
+5) At Jumpbox VM, download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
    You can run the command below from Command Prompt to download **boostrap.ps1**:
 
    ```powershell
@@ -105,7 +122,7 @@ Yes, you can! 💡
 
 ### How to execute?
 
-   1) Open Command Prompt (cmd.exe).
+   1) From Jumpbox VM, open Command Prompt (cmd.exe).
    2) Change directory to C:\Temp by running:
       ```powershell
       cd c:\Temp
