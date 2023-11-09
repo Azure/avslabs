@@ -80,7 +80,10 @@ For a reference to az deployment command, see [this](https://learn.microsoft.com
 Yes, you can! 💡
 
 ### What you will need?
-> [!NOTE] You can use Azure Cloud Shell to run the script examples in step #2 and #3.
+
+> [!NOTE]
+> You can use Azure Cloud Shell to run the script examples in step #2 and #3.
+
 1) AVS Private Cloud.
 2) Jumpbox that can reach out to AVS.
 
@@ -95,7 +98,10 @@ Yes, you can! 💡
    ```
 
 3) System Assigned Managed Identity enabled on the Jumpbox.
-   > [!IMPORTANT] Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
+
+   > [!IMPORTANT] 
+   > Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
+
 4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
    ```powershell
    #Example:
