@@ -398,11 +398,27 @@ if ($confirmDeployment -eq 1) {
     #Clear-Host // commenting this cmdlet to make script eligible to be invoked using ForEach-Object -Parallel
 }
 
+# Import the PowerCLI module
+Write-Log "Importing PowerCLI PowerShell Module"
+Import-Module VMware.PowerCLI
+Write-Log "Imported PowerCLI PowerShell Module Successfully"
+
 if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
-    Write-Log "Connecting to Management vCenter Server $VIServer ..."
-    $viConnection = Connect-VIServer $VIServer -User $VIUsername -Password $VIPassword -WarningAction SilentlyContinue
+
+    # Connecting to vCenter Server
+    try {
+        Write-Log "Connecting to Management vCenter Server $VIServer ..."
+        $viConnection = Connect-VIServer -Server $VIServer -User $VIUsername -Password $VIPassword -WarningAction SilentlyContinue -ErrorAction Stop
+        Write-Log "Connected to vCenter Server"
+    }catch {
+        Write-Log "Failed to connect to $VIServer. Error: $_"
+        exit
+    }
+
+    # Connecting to NSX-T Manager
     Write-Log "Connecting to NSX-T Server $nsxtHost ..."
     $nsxtConnection = Connect-NsxtServer -Server ${nsxtHost} -User ${nsxtUser} -Password ${nsxtPass}
+    Write-Log "Connected to NSX-T Server"
 
     # Create Resource Pool
     Write-Log "Creating $VMResourcePool if it does not exist ......"
