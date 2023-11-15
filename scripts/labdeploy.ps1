@@ -436,8 +436,21 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $tzoneOverlay = $tzones.results | Where-Object { $_.display_name -like 'TNT**-OVERLAY-TZ' }
     $tzoneOverlayID = $tzoneOverlay.id
     $tzoneOverlay = $tzoneOverlay.display_name
+
+    #TODO: Get-NsxtPolicyService is depricated, need to find alternative
+    #Solution is as below but need to test switching from Connect-NsxtServer to Connect-NsxServer 
+    <#
+    #References: https://blogs.vmware.com/networkvirtualization/2022/05/navigating-nsx-module-in-powercli-12-6.html/
+    #            https://github.com/vmware-samples/nsx-t/tree/master/powercli
+
+    Connect-NsxServer -Server $nsxtHost -User $nsxtUser -Password $nsxtPass
+    $tzs = Invoke-ListTransportZonesForEnforcementPoint -EnforcementpointId "default" -SiteId "default"
+    $tzPath = ($tzs.Results | Where-Object { $_.DisplayName -match 'TNT\d{2}-OVERLAY-TZ' }).Path | Select-Object -First 1
+    #>
+
     $transportZonePolicyService = Get-NsxtPolicyService -Name "com.vmware.nsx_policy.infra.sites.enforcement_points.transport_zones"
     $tzPath = ($transportZonePolicyService.list("default", "default").results | where { $_.display_name -like "TNT**-OVERLAY-TZ" }).path
+
 
     # Get Default T1 Gateway
     Write-Log "Getting NSX-T Default T1 Gateway"
@@ -969,12 +982,15 @@ if ($setupNewVC -eq 1) {
     }
 
     if ($deployWorkload -eq 1) {
-        $vmhost = Get-Cluster -Server $vc | Get-VMHost | Select -First 1
+        $vmhost = Get-Cluster -Server $vc | Get-VMHost | Select-Object -First 1
         $vcdatastore = Get-Datastore -Server $vc
         $appVMdns = "1.1.1.1"
         $appVMGateway = "10.${groupNumber}.1${labNumber}.128"
         $appVMIP = "10.${groupNumber}.1${labNumber}.128"
-        $vmhost = Get-Cluster -Server $vcsaIP | Get-VMHost | Select -First 1
+
+        # TODO: Need to check if the following line is necessary as #vcsaIP is not defined anywhere
+        # It is not necessary as the $vcsaIP is not defined anywhere. Thus, Delete later
+        # $vmhost = Get-Cluster -Server $vcsaIP | Get-VMHost | Select -First 1
 
         $ovfconfig = Get-OvfConfiguration $PhotonOSOVA
         $ovfNetworkLabel = ($ovfconfig.NetworkMapping | Get-Member -MemberType Properties).Name
@@ -990,7 +1006,12 @@ if ($setupNewVC -eq 1) {
             $ovfconfig.Common.guestinfo.gateway.value = "$appVMgateway"
             $ovfconfig.Common.guestinfo.ipaddress.value = "$newappVMip"
             $ovfconfig.Common.guestinfo.netmask.value = "27"
-            $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $VMhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
+            
+            $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $vmhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
+        
+            # TODO: Delete later
+            # $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $VMhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
+            
             $vm | Start-VM -Server $vc -Confirm:$false | Out-Null
         }
     }
