@@ -20,11 +20,13 @@ param (
     [switch] $automated = $false,
 
     [Parameter()]
+    [Alias("Credentials")] 
     [hashtable] $AVSInfo
 )
 #Examples:
 # labdeploy.ps1 -group 1 -lab 1
 # labdeploy.ps1 -group 1 -lab 2 -automated
+# labdeploy.ps1 -group 1 -lab 2 -automated -AVSInfo $AVSInfo
 
 $ErrorActionPreference = "Stop"
 $timeStamp = Get-Date -Format "MM-dd-yyyy_hh:mm:ss"
@@ -52,13 +54,11 @@ Write-Log " - Automation is $automated"
 $groupNumber = $group
 $labNumber = $lab
 
-# Cloud Provider
-$SddcProvider = "Microsoft"
-
 # Local Directory Information
 $mypath = Get-Location
 Write-Log "Local path is $mypath"
 
+# Reading credentials
 if ( $AVSInfo.Count -eq 0) {
     # Reading from nestedlabs.yml, setting variables for easier identification
     Write-Log "Reading from nestedlabs.yml file"
@@ -104,30 +104,32 @@ $NestedESXiHostnameToIPs = @{
 }
 
 # Nested ESXi VM Resources
-$NestedESXivCPU = "16"
+$NestedESXivCPU = "16" #Cores
 $NestedESXivMEM = "48" #GB
-$NestedESXiCachingvDisk = "8" #GB
-$NestedESXiCapacityvDisk = "100" #GB
 
-# Applicable to Microsoft AVS SDDC deployment
+# Defaults
+$defaultPassword = "MSFTavs1!"
+$defaultDomain = "avs.lab"
+
+# Nested NFS Information
 $NFSVMDisplayName = "nfs-${groupNumber}-${labNumber}"
-$NFSVMHostname = "nfs-${groupNumber}-${labNumber}.avs.lab"
+$NFSVMHostname = "nfs-${groupNumber}-${labNumber}.${defaultDomain}"
 $NFSVMIPAddress = "10.${groupNumber}.${labNumber}.7"
 $NFSVMPrefix = "24"
 $NFSVMVolumeLabel = "nfs"
 $NFSVMCapacity = "500" #GB
-$NFSVMRootPassword = "MSFTavs1!"
+$NFSVMRootPassword = $defaultPassword
 
 # VCSA Deployment Configuration
-$VCSADeploymentSize = "tiny"
+$VCSADeploymentSize = "small"
 $VCSADisplayName = "vcsa-${groupNumber}-${labNumber}"
 $VCSAIPAddress = "10.${groupNumber}.${LabNumber}.2"
 $VCSAHostname = "10.${groupNumber}.${LabNumber}.2" #Change to IP if you don't have valid DNS
 $VCSAPrefix = "24"
-$VCSASSODomainName = "avs.lab"
-$VCSASSOPassword = "MSFTavs1!"
-$VCSARootPassword = "MSFTavs1!"
-$VCSASSHEnable = "true"
+$VCSASSODomainName = $defaultDomain
+$VCSASSOPassword = $defaultPassword
+$VCSARootPassword = $defaultPassword
+$VCSASSHEnable = $true
 
 # General Deployment Configuration for Nested ESXi, VCSA & NSX VMs
 $VMDatacenter = "SDDC-Datacenter"
@@ -140,13 +142,12 @@ $VMNetmask = "255.255.255.0"
 $VMGateway = "10.${groupNumber}.${labNumber}.1"
 $VMDNS = "1.1.1.1"
 $VMNTP = "pool.ntp.org"
-$VMPassword = "MSFTavs1!"
-$VMDomain = "avs.lab"
+$VMPassword = $defaultPassword
+$VMDomain = $defaultDomain
 #$VMSyslog = "192.168.1.10"
 
 # Applicable to Nested ESXi only
-$VMSSH = "true"
-$VMVMFS = "false"
+$ESXiVMSSH = $true
 
 # Name of new vSphere Datacenter/Cluster when VCSA is deployed
 $NewVCDatacenterName = "OnPrem-SDDC-Datacenter-${groupNumber}-${labNumber}"
@@ -159,29 +160,24 @@ $NewVCReplicationDVPGName = "OnPrem-replication-${groupNumber}-${labNumber}"
 $NewVCWorkloadDVPGName = "OnPrem-workload-${groupNumber}-${labNumber}"
 $NewVCWorkloadVMFormat = "Workload-${groupNumber}-${labNumber}-" # workload-01,02,03,etc
 $NewVcWorkloadVMCount = 2
+$NewVcVAppName = "Nested-SDDC-Lab-${groupNumber}-${labNumber}"
 
 # Advanced Configurations
-# Set to 1 only if you have DNS (forward/reverse) for ESXi hostnames
-$addHostByDnsName = 0
+# Set to $true only if you have DNS (forward/reverse) for ESXi hostnames
+$addHostByDnsName = $false
 
 #### DO NOT EDIT BEYOND HERE ####
-
-$debug = $true
-$random_string = -join ((65..90) + (97..122) | Get-Random -Count 8 | % { [char]$_ })
-$VAppName = "Nested-SDDC-Lab-${groupNumber}-${labNumber}"
-
-$preCheck = 1
-$confirmDeployment = 1
-$deployNFSVM = 1
-$deployNestedESXiVMs = 1
-$deployVCSA = 1
-$setupNewVC = 1
-$addESXiHostsToVC = 1
-$configureESXiStorage = 1
-$configureVDS = 1
-$clearHealthCheckAlarm = 1
-$moveVMsIntovApp = 1
-$deployWorkload = 1
+$preCheck = $true
+$confirmDeployment = $true
+$deployNFSVM = $true
+$deployNestedESXiVMs = $true
+$deployVCSA = $true
+$setupNewVC = $true
+$addESXiHostsToVC = $true
+$configureESXiStorage = $true
+$configureVDS = $true
+$moveVMsIntovApp = $true
+$deployWorkload = $true
 
 $vcsaSize2MemoryStorageMap = @{
     "tiny"   = @{"cpu" = "2"; "mem" = "12"; "disk" = "415" };
@@ -189,14 +185,6 @@ $vcsaSize2MemoryStorageMap = @{
     "medium" = @{"cpu" = "8"; "mem" = "28"; "disk" = "700" };
     "large"  = @{"cpu" = "16"; "mem" = "37"; "disk" = "1065" };
     "xlarge" = @{"cpu" = "24"; "mem" = "56"; "disk" = "1805" }
-}
-
-$sddcProviderService = @{
-    "Microsoft" = "Azure VMware Solution (AVS)";
-}
-
-$supportedStorageType = @{
-    "Microsoft" = "NFS";
 }
 
 $esxiTotalCPU = 12
@@ -207,12 +195,7 @@ $esxiTotalStorage = 0
 
 $StartTime = Get-Date
 
-if ($preCheck -eq 1) {
-    if ($SddcProvider -ne "AWS" -and $SddcProvider -ne "Microsoft" -and $SddcProvider -ne "Google" -and $SddcProvider -ne "Oracle") {
-        Write-Host -ForegroundColor Red "`n`$SddcProvider variable is incorrectly set. Supported providers are `"AWS`", `"Microsoft`", `"Google`" and `"Oracle`" ...`n"
-        exit
-    }
-
+if ($preCheck) {
     if (!(Test-Path $NestedESXiApplianceOVA)) {
         Write-Host -ForegroundColor Red "`nUnable to find $NestedESXiApplianceOVA ...`n"
         exit
@@ -223,14 +206,12 @@ if ($preCheck -eq 1) {
         exit
     }
 
-    if ($supportedStorageType.$SddcProvider -eq "NFS") {
-        if (!(Test-Path $PhotonNFSOVA)) {
-            Write-Host -ForegroundColor Red "`nUnable to find $PhotonNFSOVA ...`n"
-            exit
-        }
+    if (!(Test-Path $PhotonNFSOVA)) {
+        Write-Host -ForegroundColor Red "`nUnable to find $PhotonNFSOVA ...`n"
+        exit
     }
 
-    if ($deployWorkload -eq 1) {
+    if ($deployWorkload) {
         if (!(Test-Path $PhotonOSOVA)) {
             Write-Host -ForegroundColor Red "`nUnable to find $PhotonOSOVA ...`n"
             exit
@@ -243,26 +224,24 @@ if ($preCheck -eq 1) {
     }
 }
 
-if ($confirmDeployment -eq 1) {
+if ($confirmDeployment) {
     Write-Host -ForegroundColor Magenta "`nPlease confirm the following configuration will be deployed:`n"
 
     Write-Host -ForegroundColor Yellow "---- Nested SDDC Automated Lab Deployment Configuration ---- "
     Write-Host -NoNewline -ForegroundColor Green "SDDC Provider: "
-    Write-Host -ForegroundColor White $SddcProvider
+    Write-Host -ForegroundColor White "Microsoft"
     Write-Host -NoNewline -ForegroundColor Green "VMware Cloud Service: "
-    Write-Host -ForegroundColor White $sddcProviderService.$SddcProvider
+    Write-Host -ForegroundColor White "Azure VMware Solution (AVS)"
 
     Write-Host -NoNewline -ForegroundColor Green "`nNested ESXi Image Path: "
     Write-Host -ForegroundColor White $NestedESXiApplianceOVA
     Write-Host -NoNewline -ForegroundColor Green "VCSA Image Path: "
     Write-Host -ForegroundColor White $VCSAInstallerPath
 
-    if ($supportedStorageType.$SddcProvider -eq "NFS") {
-        Write-Host -NoNewline -ForegroundColor Green "NFS Image Path: "
-        Write-Host -ForegroundColor White $PhotonNFSOVA
-    }
+    Write-Host -NoNewline -ForegroundColor Green "NFS Image Path: "
+    Write-Host -ForegroundColor White $PhotonNFSOVA
 
-    if ($deployWorkload -eq 1) {
+    if ($deployWorkload) {
         Write-Host -NoNewline -ForegroundColor Green "PhotonOS Image Path: "
         Write-Host -ForegroundColor White $PhotonOSOVA
     }
@@ -280,7 +259,7 @@ if ($confirmDeployment -eq 1) {
     Write-Host -NoNewline -ForegroundColor Green "VM Storage: "
     Write-Host -ForegroundColor White $VMDatastore
     Write-Host -NoNewline -ForegroundColor Green "VM vApp: "
-    Write-Host -ForegroundColor White $VAppName
+    Write-Host -ForegroundColor White $NewVcVAppName
 
     Write-Host -ForegroundColor Yellow "`n---- vESXi Configuration ----"
     Write-Host -NoNewline -ForegroundColor Green "# of Nested ESXi VMs: "
@@ -289,18 +268,8 @@ if ($confirmDeployment -eq 1) {
     Write-Host -ForegroundColor White $NestedESXivCPU
     Write-Host -NoNewline -ForegroundColor Green "vMEM: "
     Write-Host -ForegroundColor White "$NestedESXivMEM GB"
-
-    if ($supportedStorageType.$SddcProvider -eq "NFS") {
-        Write-Host -NoNewline -ForegroundColor Green "NFS Storage: "
-        Write-Host -ForegroundColor White "$NFSVMCapacity GB"
-    }
-    else {
-        Write-Host -NoNewline -ForegroundColor Green "vSAN Caching VMDK: "
-        Write-Host -ForegroundColor White "$NestedESXiCachingvDisk GB"
-        Write-Host -NoNewline -ForegroundColor Green "vSAN Capacity VMDK: "
-        Write-Host -ForegroundColor White "$NestedESXiCapacityvDisk GB"
-    }
-
+    Write-Host -NoNewline -ForegroundColor Green "NFS Storage: "
+    Write-Host -ForegroundColor White "$NFSVMCapacity GB"
     Write-Host -NoNewline -ForegroundColor Green "IP Address(s): "
     Write-Host -ForegroundColor White $NestedESXiHostnameToIPs.Values
     Write-Host -NoNewline -ForegroundColor Green "Netmask "
@@ -314,7 +283,7 @@ if ($confirmDeployment -eq 1) {
     Write-Host -NoNewline -ForegroundColor Green "Syslog: "
     Write-Host -ForegroundColor White $VMSyslog
     Write-Host -NoNewline -ForegroundColor Green "Enable SSH: "
-    Write-Host -ForegroundColor White $VMSSH
+    Write-Host -ForegroundColor White $ESXiVMSSH
 
     Write-Host -ForegroundColor Yellow "`n---- VCSA Configuration ----"
     Write-Host -NoNewline -ForegroundColor Green "Deployment Size: "
@@ -334,12 +303,9 @@ if ($confirmDeployment -eq 1) {
 
     $esxiTotalCPU = $NestedESXiHostnameToIPs.count * [int]$NestedESXivCPU
     $esxiTotalMemory = $NestedESXiHostnameToIPs.count * [int]$NestedESXivMEM
-    if ($SddcProvider -eq "AWS" -or $SddcProvider -eq "Microsoft") {
-        $esxiTotalStorage = [int]$NFSCapacity
-    }
-    else {
-        $esxiTotalStorage = ($NestedESXiHostnameToIPs.count * [int]$NestedESXiCachingvDisk) + ($NestedESXiHostnameToIPs.count * [int]$NestedESXiCapacityvDisk)
-    }
+
+    $esxiTotalStorage = [int]$NFSCapacity
+
     $vcsaTotalCPU = $vcsaSize2MemoryStorageMap.$VCSADeploymentSize.cpu
     $vcsaTotalMemory = $vcsaSize2MemoryStorageMap.$VCSADeploymentSize.mem
     $vcsaTotalStorage = $vcsaSize2MemoryStorageMap.$VCSADeploymentSize.disk
@@ -358,24 +324,16 @@ if ($confirmDeployment -eq 1) {
     Write-Host -NoNewline -ForegroundColor Green "VCSA     VM Storage: "
     Write-Host -ForegroundColor White $vcsaTotalStorage "GB"
 
-    if ($supportedStorageType.$SddcProvider -eq "NFS") {
-        Write-Host -NoNewline -ForegroundColor Green "NFS      VM CPU: "
-        Write-Host -NoNewline -ForegroundColor White "2"
-        Write-Host -NoNewline -ForegroundColor Green " NFS      VM Memory: "
-        Write-Host -NoNewline -ForegroundColor White "4 GB "
-        Write-Host -NoNewline -ForegroundColor Green "NFS      VM Storage: "
-        Write-Host -ForegroundColor White $NFSVMCapacity "GB"
+    $nfsCPU = 2
+    $nfsMemory = 4
+    $nfsStorage = $NFSCapacity
 
-        $nfsCPU = 2
-        $nfsMemory = 4
-        $nfsStorage = $NFSCapacity
-    }
-    else {
-        $nfsCPU = 0
-        $nfsMemory = 0
-        $nfsStorage = 0
-    }
-
+    Write-Host -NoNewline -ForegroundColor Green "NFS      VM CPU: "
+    Write-Host -NoNewline -ForegroundColor White $nfsCPU
+    Write-Host -NoNewline -ForegroundColor Green " NFS      VM Memory: "
+    Write-Host -NoNewline -ForegroundColor White $nfsMemory " GB "
+    Write-Host -NoNewline -ForegroundColor Green "NFS      VM Storage: "
+    Write-Host -ForegroundColor White $NFSVMCapacity " GB"
     Write-Host -ForegroundColor White "---------------------------------------------"
     Write-Host -NoNewline -ForegroundColor Green "Total CPU: "
     Write-Host -ForegroundColor White ($esxiTotalCPU + $vcsaTotalCPU + $nsxManagerTotalCPU + $nsxEdgeTotalCPU + $nfsCPU)
@@ -395,6 +353,7 @@ if ($confirmDeployment -eq 1) {
         Write-Host -ForegroundColor Green "`nAutomated Deployment!`n"
     }
 
+    Write-Host -ForegroundColor Green "`n=========  =============  =========`n"
     #Clear-Host // commenting this cmdlet to make script eligible to be invoked using ForEach-Object -Parallel
 }
 
@@ -403,7 +362,7 @@ Write-Log "Importing PowerCLI PowerShell Module"
 Import-Module VMware.PowerCLI
 Write-Log "Imported PowerCLI PowerShell Module Successfully"
 
-if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
+if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
 
     # Connecting to vCenter Server
     try {
@@ -434,7 +393,8 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $tzSvc = Get-NsxtService -Name com.vmware.nsx.transport_zones
     $tzones = $tzSvc.list()
     $tzoneOverlay = $tzones.results | Where-Object { $_.display_name -like 'TNT**-OVERLAY-TZ' }
-    $tzoneOverlayID = $tzoneOverlay.id
+    #TODO: Test if commenting the following line will cause any problem
+    #$tzoneOverlayID = $tzoneOverlay.id
     $tzoneOverlay = $tzoneOverlay.display_name
 
     #TODO: Get-NsxtPolicyService is depricated, need to find alternative
@@ -448,8 +408,9 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $tzPath = ($tzs.Results | Where-Object { $_.DisplayName -match 'TNT\d{2}-OVERLAY-TZ' }).Path | Select-Object -First 1
     #>
 
-    $transportZonePolicyService = Get-NsxtPolicyService -Name "com.vmware.nsx_policy.infra.sites.enforcement_points.transport_zones"
-    $tzPath = ($transportZonePolicyService.list("default", "default").results | where { $_.display_name -like "TNT**-OVERLAY-TZ" }).path
+    #TODO: Test if commenting the following line will cause any problem
+    #$transportZonePolicyService = Get-NsxtPolicyService -Name "com.vmware.nsx_policy.infra.sites.enforcement_points.transport_zones"
+    #$tzPath = ($transportZonePolicyService.list("default", "default").results | where { $_.display_name -like "TNT**-OVERLAY-TZ" }).path
 
 
     # Get Default T1 Gateway
@@ -458,7 +419,8 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $t1svc = Get-NsxtService -Name com.vmware.nsx.logical_routers
     $t1list = $t1Svc.list()
     $t1result = $t1list.results | Where-Object { $_.display_name -like 'TNT**-T1' }
-    $t1ID = $t1result.id
+    #TODO: Test if commenting the following line will cause any problem
+    #$t1ID = $t1result.id
     $t1Name = $t1result.display_name
 
     # Create Segment Profiles
@@ -589,8 +551,8 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
         $secprofile = Invoke-RestMethod -Uri $uri -Headers $Header -Method Patch -Body $Body -ContentType "application/json" -SkipCertificateCheck
     }
 
-    ## Create Network Segment for Embedded Lab
-    Write-Log "Creating Network in AVS NSX-T for Embedded Lab ${labNumber}"
+    ## Create Network Segment for Nested Lab
+    Write-Log "Creating Network in AVS NSX-T for Nested Lab ${labNumber}"
 
     $network = $VMNetwork
     $segmentName = $VMNetwork
@@ -680,11 +642,12 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     # Get Logical Switch Information
     Write-Log "Getting Logical Switch Information for $segmentName"
 
-    $lssvc = Get-NsxtService -Name com.vmware.nsx.logical_switches
-    $lslist = $lsSvc.list()
-    $lsresult = $lslist.results | Where-Object { $_.display_name -eq "$network" }
-    $lsID = $lsresult.id
-    $lsName = $lsresult.display_name
+    #TODO: Test if commenting the following line will cause any problem
+    #$lssvc = Get-NsxtService -Name com.vmware.nsx.logical_switches
+    #$lslist = $lsSvc.list()
+    #$lsresult = $lslist.results | Where-Object { $_.display_name -eq "$network" }
+    #$lsID = $lsresult.id
+    #$lsName = $lsresult.display_name
 
     # Gather AVS vCenter Information
     $datastore = Get-Datastore -Server $viConnection -Name $VMDatastore | Select -First 1
@@ -694,7 +657,7 @@ if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
     $vmhost = $cluster | Get-VMHost | Select -First 1
 }
 
-if ($deployNestedESXiVMs -eq 1) {
+if ($deployNestedESXiVMs) {
     $NestedESXiHostnameToIPs.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
         $VMName = $_.Key
         $VMIPAddress = $_.Value
@@ -702,7 +665,7 @@ if ($deployNestedESXiVMs -eq 1) {
         $ovfconfig = Get-OvfConfiguration $NestedESXiApplianceOVA
         $ovfNetworkLabel = ($ovfconfig.NetworkMapping | Get-Member -MemberType Properties).Name
         $ovfconfig.NetworkMapping.$ovfNetworkLabel.value = $VMNetwork
-        Sleep 15
+        Start-Sleep 15
 
         $ovfconfig.common.guestinfo.hostname.value = $VMName
         $ovfconfig.common.guestinfo.ipaddress.value = $VMIPAddress
@@ -712,13 +675,7 @@ if ($deployNestedESXiVMs -eq 1) {
         $ovfconfig.common.guestinfo.domain.value = $VMDomain
         $ovfconfig.common.guestinfo.ntp.value = $VMNTP
         $ovfconfig.common.guestinfo.password.value = $VMPassword
-        if ($VMSSH -eq "true") {
-            $VMSSHVar = $true
-        }
-        else {
-            $VMSSHVar = $false
-        }
-        $ovfconfig.common.guestinfo.ssh.value = $VMSSHVar
+        $ovfconfig.common.guestinfo.ssh.value = $ESXiVMSSH
     
         Write-Log "Deploying Nested ESXi VM $VMName ..."
         $vm = Import-VApp -Source $NestedESXiApplianceOVA -OvfConfiguration $ovfconfig -Name $VMName -Location $resourcepool -VMHost $vmhost -Datastore $datastore -DiskStorageFormat thin -Force
@@ -730,18 +687,12 @@ if ($deployNestedESXiVMs -eq 1) {
         Write-Log "Updating vCPU Count to $NestedESXivCPU & vMEM to $NestedESXivMEM GB ..."
         Set-VM -Server $viConnection -VM $vm -NumCpu $NestedESXivCPU -MemoryGB $NestedESXivMEM -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
 
-        if ($supportedStorageType.$SddcProvider -eq "VSAN") {
-            Write-Log "Updating vSAN Cache VMDK size to $NestedESXiCachingvDisk GB & Capacity VMDK size to $NestedESXiCapacityvDisk GB ..."
-            Get-HardDisk -Server $viConnection -VM $vm -Name "Hard disk 2" | Set-HardDisk -CapacityGB $NestedESXiCachingvDisk -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
-            Get-HardDisk -Server $viConnection -VM $vm -Name "Hard disk 3" | Set-HardDisk -CapacityGB $NestedESXiCapacityvDisk -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
-        }
-
         Write-Log "Powering On $vmname ..."
         $vm | Start-Vm -RunAsync | Out-Null
     }
 }
 
-if ($deployNFSVM -eq 1 -and $supportedStorageType.$SddcProvider -eq "NFS") {
+if ($deployNFSVM) {
     $ovfconfig = Get-OvfConfiguration $PhotonNFSOVA
     $ovfNetworkLabel = ($ovfconfig.NetworkMapping | Get-Member -MemberType Properties).Name
     $ovfconfig.NetworkMapping.$ovfNetworkLabel.value = $VMNetwork
@@ -763,7 +714,7 @@ if ($deployNFSVM -eq 1 -and $supportedStorageType.$SddcProvider -eq "NFS") {
     $vm | Start-Vm -RunAsync | Out-Null
 }
 
-if ($deployVCSA -eq 1) {
+if ($deployVCSA) {
     if ($IsWindows) {
         $config = (Get-Content -Raw "$($VCSAInstallerPath)\vcsa-cli-installer\templates\install\embedded_vCSA_on_VC.json") | convertfrom-json
     }
@@ -789,13 +740,7 @@ if ($deployVCSA -eq 1) {
     $config.'new_vcsa'.os.ntp_servers = $VMNTP
     $config.'new_vcsa'.network.system_name = $VCSAHostname
     $config.'new_vcsa'.os.password = $VCSARootPassword
-    if ($VCSASSHEnable -eq "true") {
-        $VCSASSHEnableVar = $true
-    }
-    else {
-        $VCSASSHEnableVar = $false
-    }
-    $config.'new_vcsa'.os.ssh_enable = $VCSASSHEnableVar
+    $config.'new_vcsa'.os.ssh_enable = $VCSASSHEnable
     $config.'new_vcsa'.sso.password = $VCSASSOPassword
     $config.'new_vcsa'.sso.domain_name = $VCSASSODomainName
 
@@ -833,45 +778,45 @@ Disconnect-VIServer -Server $viConnection -Confirm:$false
 Write-Log "Reconnecting $VIServer"
 $viConnection = Connect-VIServer $VIServer -User $VIUsername -Password $VIPassword -WarningAction SilentlyContinue
 
-if ($moveVMsIntovApp -eq 1) {
-    Write-Log "Creating vApp $VAppName ..."
-    $VApp = New-VApp -Name $VAppName -Server $viConnection -Location $resourcepool
+if ($moveVMsIntovApp) {
+    Write-Log "Creating vApp $NewVcVAppName ..."
+    $VApp = New-VApp -Name $NewVcVAppName -Server $viConnection -Location $resourcepool
 
     if (-Not (Get-Folder $VMFolder -ErrorAction Ignore)) {
         Write-Log "Creating VM Folder $VMFolder ..."
         $folder = New-Folder -Name $VMFolder -Server $viConnection -Location (Get-Datacenter $VMDatacenter | Get-Folder vm)
     }
 
-    if ($deployNFSVM -eq 1 -and $supportedStorageType.$SddcProvider -eq "NFS") {
+    if ($deployNFSVM) {
         $vcsaVM = Get-VM -Name $NFSVMDisplayName -Server $viConnection
-        Write-Log "Moving $NFSVMDisplayName into $VAppName vApp ..."
+        Write-Log "Moving $NFSVMDisplayName into $NewVcVAppName vApp ..."
         Move-VM -VM $vcsaVM -Server $viConnection -Destination $VApp -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
     }
 
-    if ($deployNestedESXiVMs -eq 1) {
-        Write-Log "Moving Nested ESXi VMs into $VAppName vApp ..."
+    if ($deployNestedESXiVMs) {
+        Write-Log "Moving Nested ESXi VMs into $NewVcVAppName vApp ..."
         $NestedESXiHostnameToIPs.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
             $vm = Get-VM -Name $_.Key -Server $viConnection
             Move-VM -VM $vm -Server $viConnection -Destination $VApp -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
         }
     }
 
-    if ($deployVCSA -eq 1) {
+    if ($deployVCSA) {
         $vcsaVM = Get-VM -Name $VCSADisplayName -Server $viConnection
-        Write-Log "Moving $VCSADisplayName into $VAppName vApp ..."
+        Write-Log "Moving $VCSADisplayName into $NewVcVAppName vApp ..."
         Move-VM -VM $vcsaVM -Server $viConnection -Destination $VApp -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
     }
 
-    Write-Log "Moving $VAppName to VM Folder $VMFolder ..."
-    Move-VApp -Server $viConnection $VAppName -Destination (Get-Folder -Server $viConnection $VMFolder) | Out-File -Append -LiteralPath $verboseLogFile
+    Write-Log "Moving $NewVcVAppName to VM Folder $VMFolder ..."
+    Move-VApp -Server $viConnection $NewVcVAppName -Destination (Get-Folder -Server $viConnection $VMFolder) | Out-File -Append -LiteralPath $verboseLogFile
 }
 
-if ( $deployNFSVM -eq 1 -or $deployNestedESXiVMs -eq 1 -or $deployVCSA -eq 1) {
+if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     Write-Log "Disconnecting from $VIServer ..."
     Disconnect-VIServer -Server $viConnection -Confirm:$false
 }
 
-if ($setupNewVC -eq 1) {
+if ($setupNewVC) {
     Write-Log "Connecting to the new VCSA ..."
     $vc = Connect-VIServer $VCSAIPAddress -User "administrator@$VCSASSODomainName" -Password $VCSASSOPassword -WarningAction SilentlyContinue -Force
 
@@ -883,23 +828,17 @@ if ($setupNewVC -eq 1) {
 
     $c = Get-Cluster -Server $vc $NewVCVSANClusterName -ErrorAction Ignore
     if ( -Not $c) {
-        if ($configureESXiStorage -eq 1 -and $supportedStorageType.$SddcProvider -eq "VSAN") {
-            Write-Log "Creating VSAN Cluster $NewVCVSANClusterName ..."
-            New-Cluster -Server $vc -Name $NewVCVSANClusterName -Location (Get-Datacenter -Name $NewVCDatacenterName -Server $vc) -DrsEnabled -VsanEnabled | Out-File -Append -LiteralPath $verboseLogFile
-        }
-        else {
-            Write-Log "Creating vSphere Cluster $NewVCVSANClusterName ..."
-            New-Cluster -Server $vc -Name $NewVCVSANClusterName -Location (Get-Datacenter -Name $NewVCDatacenterName -Server $vc) -DrsEnabled | Out-File -Append -LiteralPath $verboseLogFile
-        }
+        Write-Log "Creating vSphere Cluster $NewVCVSANClusterName ..."
+        New-Cluster -Server $vc -Name $NewVCVSANClusterName -Location (Get-Datacenter -Name $NewVCDatacenterName -Server $vc) -DrsEnabled | Out-File -Append -LiteralPath $verboseLogFile
     }
 
-    if ($addESXiHostsToVC -eq 1) {
+    if ($addESXiHostsToVC) {
         $NestedESXiHostnameToIPs.GetEnumerator() | Sort-Object -Property Value | Foreach-Object {
             $VMName = $_.Key
             $VMIPAddress = $_.Value
 
             $targetVMHost = $VMIPAddress
-            if ($addHostByDnsName -eq 1) {
+            if ($addHostByDnsName) {
                 $targetVMHost = $VMName
             }
             Write-Log "Adding ESXi host $targetVMHost to Cluster ..."
@@ -907,37 +846,15 @@ if ($setupNewVC -eq 1) {
         }
     }
 
-    if ($configureESXiStorage -eq 1) {
-        if ($supportedStorageType.$SddcProvider -eq "VSAN") {
-            Write-Log "Enabling VSAN & disabling VSAN Health Check ..."
-            Get-VsanClusterConfiguration -Server $vc -Cluster $NewVCVSANClusterName | Set-VsanClusterConfiguration -HealthCheckIntervalMinutes 0 | Out-File -Append -LiteralPath $verboseLogFile
-
-            foreach ($vmhost in Get-Cluster -Server $vc | Get-VMHost) {
-                $luns = $vmhost | Get-ScsiLun | select CanonicalName, CapacityGB
-
-                Write-Log "Querying ESXi host disks to create VSAN Diskgroups ..."
-                foreach ($lun in $luns) {
-                    if (([int]($lun.CapacityGB)).toString() -eq "$NestedESXiCachingvDisk") {
-                        $vsanCacheDisk = $lun.CanonicalName
-                    }
-                    if (([int]($lun.CapacityGB)).toString() -eq "$NestedESXiCapacityvDisk") {
-                        $vsanCapacityDisk = $lun.CanonicalName
-                    }
-                }
-                Write-Log "Creating VSAN DiskGroup for $vmhost ..."
-                New-VsanDiskGroup -Server $vc -VMHost $vmhost -SsdCanonicalName $vsanCacheDisk -DataDiskCanonicalName $vsanCapacityDisk | Out-File -Append -LiteralPath $verboseLogFile
-            }
-        }
-        else {
-            $labDatastore = "LabDatastore"
-            Write-Log "Adding NFS Storage ..."
-            foreach ($vmhost in Get-Cluster -Server $vc | Get-VMHost) {
-                $vmhost | New-Datastore -Nfs -Name $labDatastore -Path /mnt/${NFSVMVolumeLabel} -NfsHost $NFSVMIPAddress | Out-File -Append -LiteralPath $verboseLogFile
-            }
+    if ($configureESXiStorage) {
+        $labDatastore = "LabDatastore"
+        Write-Log "Adding NFS Storage ..."
+        foreach ($vmhost in Get-Cluster -Server $vc | Get-VMHost) {
+            $vmhost | New-Datastore -Nfs -Name $labDatastore -Path /mnt/${NFSVMVolumeLabel} -NfsHost $NFSVMIPAddress | Out-File -Append -LiteralPath $verboseLogFile
         }
     }
 
-    if ($configureVDS -eq 1) {
+    if ($configureVDS) {
         $vds = New-VDSwitch -Server $vc  -Name $NewVCVDSName -Location (Get-Datacenter -Name $NewVCDatacenterName) -Mtu 1600
         $workloadVLANid = "${labNumber}00"
         New-VDPortgroup -Server $vc -Name $NewVCMgmtDVPGName -Vds $vds | Out-File -Append -LiteralPath $verboseLogFile
@@ -955,19 +872,6 @@ if ($setupNewVC -eq 1) {
         }
     }
 
-    if ($clearHealthCheckAlarm -eq 1 -and $supportedStorageType.$SddcProvider -eq "VSAN") {
-        Write-Log "Clearing Health Check Alarms ..."
-        $alarmMgr = Get-View AlarmManager -Server $vc
-        Get-Cluster -Server $vc | where { $_.ExtensionData.TriggeredAlarmState } | % {
-            $cluster = $_
-            $Cluster.ExtensionData.TriggeredAlarmState | % {
-                $alarmMgr.AcknowledgeAlarm($_.Alarm, $cluster.ExtensionData.MoRef)
-            }
-        }
-        $alarmSpec = New-Object VMware.Vim.AlarmFilterSpec
-        $alarmMgr.ClearTriggeredAlarms($alarmSpec)
-    }
-
     # Final configure and then exit maintanence mode in case patching was done earlier
     foreach ($vmhost in Get-Cluster -Server $vc | Get-VMHost) {
         # Disable Core Dump Warning
@@ -981,16 +885,13 @@ if ($setupNewVC -eq 1) {
         }
     }
 
-    if ($deployWorkload -eq 1) {
+    if ($deployWorkload) {
+        Write-Log "Deploying Workload VMs ..."
         $vmhost = Get-Cluster -Server $vc | Get-VMHost | Select-Object -First 1
         $vcdatastore = Get-Datastore -Server $vc
         $appVMdns = "1.1.1.1"
         $appVMGateway = "10.${groupNumber}.1${labNumber}.128"
         $appVMIP = "10.${groupNumber}.1${labNumber}.128"
-
-        # TODO: Need to check if the following line is necessary as #vcsaIP is not defined anywhere
-        # It is not necessary as the $vcsaIP is not defined anywhere. Thus, Delete later
-        # $vmhost = Get-Cluster -Server $vcsaIP | Get-VMHost | Select -First 1
 
         $ovfconfig = Get-OvfConfiguration $PhotonOSOVA
         $ovfNetworkLabel = ($ovfconfig.NetworkMapping | Get-Member -MemberType Properties).Name
@@ -999,21 +900,21 @@ if ($setupNewVC -eq 1) {
         foreach ($i in 1..$NewVcWorkloadVMCount) {
             $VMName = "$NewVCWorkloadVMFormat$i"
             $a, $b, $c, $d = $appVMIP.Split(".")
-            $d = [int]$d + $i
+            $d = [int]$d + $i+1
             $newappVMIP = "${a}.${b}.${c}.${d}"
-            $ovfCommonLabel = ($ovfconfig.Common.guestinfo | Get-Member -MemberType Properties).Name
+            #TODO: Test if commenting the following line will cause any problem
+            #$ovfCommonLabel = ($ovfconfig.Common.guestinfo | Get-Member -MemberType Properties).Name
             $ovfconfig.Common.guestinfo.dns.value = "$appVMdns"
             $ovfconfig.Common.guestinfo.gateway.value = "$appVMgateway"
             $ovfconfig.Common.guestinfo.ipaddress.value = "$newappVMip"
             $ovfconfig.Common.guestinfo.netmask.value = "27"
             
-            $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $vmhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
-        
-            # TODO: Delete later
-            # $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $VMhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
-            
+            Write-Log "Deploying $VMName with IP $newappVMIP ..."
+            $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $vmhost -Datastore $vcdatastore -DiskStorageFormat thin -Force    
             $vm | Start-VM -Server $vc -Confirm:$false | Out-Null
+            Write-Log "$VMName deployed successfully and was powered on ..."
         }
+        Write-Log "Workload VMs deployed successfully ..."
     }
 
     Write-Log "Disconnecting from new VCSA ..."
