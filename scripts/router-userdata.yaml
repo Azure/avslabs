@@ -1,0 +1,42 @@
+#cloud-config
+hostname: router
+package_update: true
+package_upgrade: true
+
+write_files:
+- content: |
+    network:
+      ethernets:
+        ens192:
+          dhcp6: false
+          dhcp4: false
+          addresses: [ __PRIMARY_IPADDRESS__/__PRIMARY_NETMASK__ ]
+          routes:
+          - to: default
+            via: __PRIMARY_GATEWAY__
+          nameservers:
+            addresses: [ 1.1.1.1 ]
+        ens224:
+          dhcp6: false
+          dhcp4: false
+          addresses: [ __SECONDIP_ADDRESS__/__SECONDARY_NETMASK__ ]
+  path: /etc/netplan/50-cloud-init.yaml
+  append: false
+
+chpasswd:
+  list: |
+    root:MSFTavs1!
+    ubuntu:MSFTavs1!
+  expire: false
+
+runcmd:
+# SSH with password
+- sed 's/PasswordAuthentication no/PasswordAuthentication yes/' -i /etc/ssh/sshd_config
+- systemctl restart sshd
+# Network setup
+- netplan apply
+# Routing capabilities
+- echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
+- sysctl -p
+- iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+- iptables-save >/etc/systemd/scripts/ip4save

@@ -1,24 +1,34 @@
 param (
     [Parameter()]
+    # Description: "Group number for the set of nested labs to deploy. Default is 1."
     [ValidateRange(1, 64)]
     [Alias("GroupId")]
     [Int] $GroupNumber = 1,
 
     [Parameter()]
+    # Description: "Number of nested labs to be deployed. Default is 4."
     [ValidateRange(1, 32)]
     [Alias("Labs")]
     [Int] $NumberOfNestedLabs = 4,
 
     [Parameter()]
+    # Description: "Is Azure Government Cloud? Default is false."
     [Alias("IsAzureGovernment")] 
-    [switch] $isMAG = $false
+    [switch] $isMAG = $false,
+
+    [Parameter()]
+    # Description: "Restart build sequence from this index. Default is 1."
+    [Int] $ReStartIndex = 1
 )
 
 # constant variables
 $Logfile = "C:\temp\bootstrap-nestedlabs.log"
 $TempPath = "C:\temp"
+$ConfigurationFile = "C:\temp\nestedlabs.yml"
 $ExtractionPath = "C:\temp\avs-embedded-labs-auto"
 $NestedLabScriptURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/labdeploy.ps1"
+$UbuntuOvaURL = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.ova"
+$RouterUserDataURL = "https://raw.githubusercontent.com/Azure/avslabs/main/scripts/router-userdata.yaml"
 
 # initializing
 
@@ -177,7 +187,7 @@ function Set-NestedLabRequirement {
     # Start-Sleep -Seconds 30
 
     # Install YAML PowerShell Module
-    # $result = (Get-Module -ListAvailable -Name powershell-yaml) ? $true : (Install-Module powershell-yaml -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
+    $result = (Get-Module -ListAvailable -Name powershell-yaml) ? $true : (Install-Module powershell-yaml -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
 
     # Extra Verification 
     $result = (Get-Module -ListAvailable -Name VMware.PowerCLI) ? $true : $false
@@ -192,34 +202,46 @@ function Set-NestedLabPackage {
     
     if (Test-Path $ExtractionPath -PathType Container) {
         Write-Log "|--Set-NestedLabPackage - Directory already exists"
-        return $true
-    }
-
-    if (Test-Path $ZipPath -PathType Leaf) {
+    } else {
+        if (Test-Path $ZipPath -PathType Leaf) {
         
-        Set-Location $TempPath
+            Set-Location $TempPath
 
-        #Checking if there is enough diskspace before extracting the file
-        if (Test-AvailableDiskSpace) {
-            #Extracting Lab Package (zip) using 7zip
-            Write-Log "|--Set-NestedLabPackage - Extracting '$ZipPath'"
-            7z x $ZipPath -o*
+            #Checking if there is enough diskspace before extracting the file
+            if (Test-AvailableDiskSpace) {
+                #Extracting Lab Package (zip) using 7zip
+                Write-Log "|--Set-NestedLabPackage - Extracting '$ZipPath'"
+                7z x $ZipPath -o*
+            }
+
+            #Downloading latest version of labdeploy.ps1
+            $NestedLabScriptPath = $ExtractionPath + "\" + $NestedLabScriptURL.Split('/')[-1]
+            if (Test-Path $NestedLabScriptPath -PathType Leaf) {
+                Remove-Item -Path $NestedLabScriptPath -Force -Confirm:$false -ErrorAction Continue
+            }
+
+            Start-BitsTransfer -Source $NestedLabScriptURL -Destination $ExtractionPath -Priority High
         }
-
-        #Downloading latest version of labdeploy.ps1
-        $NestedLabScriptPath = $ExtractionPath + "\" + $NestedLabScriptURL.Split('/')[-1]
-        if (Test-Path $NestedLabScriptPath -PathType Leaf) {
-            Remove-Item -Path $NestedLabScriptPath -Force -Confirm:$false -ErrorAction Continue
+        else {
+            return $false
         }
-
-        Start-BitsTransfer -Source $NestedLabScriptURL -Destination $ExtractionPath -Priority High
-
-        return (Test-Path $ExtractionPath)
-    }
-    else {
-        return $false
     }
 
+    $UbuntuOvaPath = $ExtractionPath + "\Templates\" + $UbuntuOvaURL.Split('/')[-1]
+    if (Test-Path $UbuntuOvaPath -PathType Leaf) {
+        Write-Log "|--Set-NestedLabPackage - Ubuntu image already downloaded"
+    } else {
+        Start-BitsTransfer -Source $UbuntuOvaURL -Destination "$ExtractionPath\Templates\" -Priority High
+    }
+
+    $RouterUserDataPath = $ExtractionPath + "\" + $RouterUserDataURL.Split('/')[-1]
+    if (Test-Path $RouterUserDataPath -PathType Leaf) {
+        Write-Log "|--Set-NestedLabPackage - Router userdata file already downloaded"
+    } else {
+        Start-BitsTransfer -Source $RouterUserDataURL -Destination $ExtractionPath -Priority High
+    }
+    
+    return (Test-Path $ExtractionPath)
 }
 
 
@@ -341,7 +363,7 @@ function Build-NestedLab {
 
     Write-Log "|--Build-NestedLab - Started deploying $NumberOfNestedLabs nested labs for GroupID $GroupNumber"
 
-    for ($i = 1; $i -le $NumberOfNestedLabs; $i++) {
+    for ($i = $ReStartIndex; $i -le $NumberOfNestedLabs; $i++) {
         #Start-Process -Wait -FilePath PWSH.exe -WorkingDirectory $ExtractionPath -ArgumentList "-ExecutionPolicy Unrestricted -NonInteractive -NoProfile -WindowStyle Hidden", "-Command .\labdeploy.ps1 -group $groupNumber -lab $i -automated"
         Write-Log "|--Build-NestedLab - Started building Nested Lab #$i "
         .\labdeploy.ps1 -group $GroupNumber -lab $i -automated -AVSInfo $AVSInfo
@@ -354,7 +376,15 @@ function Build-NestedLab {
 }
 
 function Complete-NestedLabDeployment {
-    Disable-ScheduledTask -TaskName "Build Nested Labs"
+    $task = Get-ScheduledTask -TaskName "Build Nested Labs" -ErrorAction SilentlyContinue
+    if ($null -eq $task) {
+        Write-Log "|--Complete-NestedLabDeployment - No Windows Scheduled Task to disable"
+        return
+    }
+    if ($task.State -eq "Ready") {
+        Write-Log "|--Complete-NestedLabDeployment - Disabling Windows Scheduled Task"
+        Disable-ScheduledTask -TaskName "Build Nested Labs"
+    }
 }
 
 #-------------------------------------------------------------------------------------------------------#
@@ -374,20 +404,30 @@ Write-Log "Setting basic requirements for labdeploy.ps1 script (i.e.: installing
 if (Set-NestedLabRequirement) {
     Write-Log "Extracting nested labs Zip package"
     if (Set-NestedLabPackage) {
-        Write-Log "Validation authentication to AVS from Jumpbox VM (i.e.: making sure Jumpbox VM managed identity has contributor permission over AVS Private Cloud resource)"
-        if (Test-AuthenticationToAVS) {
-            Write-Log "Getting AVS credentials information that is required by labdeploy.ps1 script"
-            $AVSInfo = Get-NestedLabConfigurations
-            if ($AVSInfo.Count -eq 2) {
-                Write-Log "Checking if AVS provisioning state is 'Succeeded' (i.e. making sure AVS is ready for next steps)"
-                if (Test-AVSReadiness) {
-                    Write-Log "Enabling outbound Internet access from AVS which is required by labdeploy.ps1 script"
-                    if (Enable-AVSPrivateCloudInternetViaSNAT) {
-                        Write-Log "Executing labdeploy.ps1 script for building $NumberOfNestedLabs nested VMware vSphere labs inside AVS Private Cloud"
-                        Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs -AVSInfo $AVSInfo
+        if (-not(Test-Path $ConfigurationFile)) {
+            Write-Log "Validation authentication to AVS from Jumpbox VM (i.e.: making sure Jumpbox VM managed identity has contributor permission over AVS Private Cloud resource)"
+            if (Test-AuthenticationToAVS) {
+                Write-Log "Getting AVS credentials information that is required by labdeploy.ps1 script"
+                $AVSInfo = Get-NestedLabConfigurations
+                if ($AVSInfo.Count -eq 2) {
+                    Write-Log "Checking if AVS provisioning state is 'Succeeded' (i.e. making sure AVS is ready for next steps)"
+                    if (Test-AVSReadiness) {
+                        Write-Log "Enabling outbound Internet access from AVS which is required by labdeploy.ps1 script"
+                        if (Enable-AVSPrivateCloudInternetViaSNAT) {
+                            Write-Log "Executing labdeploy.ps1 script for building $NumberOfNestedLabs nested VMware vSphere labs inside AVS Private Cloud"
+                            Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs -AVSInfo $AVSInfo
+                        }
                     }
                 }
             }
+        } else {
+            Write-Log "Building labs without using the System Assigned Managed Identity"
+            if (Test-Path "$TempPath/nestedlabs.yml" -PathType Leaf) {
+                Copy-Item "$TempPath/nestedlabs.yml" "$ExtractionPath/nestedlabs.yml"
+            } else {
+                Write-Log "Missing file $TempPath/nestedlabs.yml to build labs without System Assigned Managed Identity"
+            }
+            Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs
         }
     }
 }
