@@ -5,20 +5,24 @@
 # Website: www.avshub.io
 
 param (
+    # Description: "Group number for the set of nested labs to deploy. Default is 1."
     [Parameter(Mandatory)]
     [ValidateRange(1, 50)]
     [Alias("GroupNumber")] 
     [Int] $group,
     
+    # Description: "Number of nested labs to be deployed. Default is 4."
     [Parameter(Mandatory)]
     [ValidateRange(1, 50)]
     [Alias("LabNumber")] 
     [Int] $lab,
 
+    # Description: "Is deployment in fully automated mode. Default to $false."
     [Parameter()]
     [Alias("IsAutomated")] 
     [switch] $automated = $false,
 
+    # Description: "AVS configuration hashtable."
     [Parameter()]
     [Alias("Credentials")] 
     [hashtable] $AVSInfo
@@ -62,10 +66,9 @@ Write-Log "Local path is $mypath"
 if ( $AVSInfo.Count -eq 0) {
     # Reading from nestedlabs.yml, setting variables for easier identification
     Write-Log "Reading from nestedlabs.yml file"
-    [string[]]$fileContent = Get-Content 'nestedlabs.yml'
-    $content = ''
-    foreach ($line in $fileContent) { $content = $content + "`n" + $line }
-    $config = ConvertFrom-YAML $content
+    Import-Module powershell-yaml
+    [string]$fileContent = Get-Content -Raw 'nestedlabs.yml'
+    $config = ConvertFrom-YAML $fileContent
 }
 else {
     Write-Log "Getting AVS SDDC Credentials through Parameter"
@@ -95,6 +98,8 @@ $NestedESXiApplianceOVA = "${mypath}\Templates\Nested_ESXi7.0u3c.ova"
 $VCSAInstallerPath = "${mypath}\Templates\VCSA7-Install"
 $PhotonNFSOVA = "${mypath}\Templates\PhotonOS_NFS_Appliance_0.1.0.ova"
 $PhotonOSOVA = "${mypath}\Templates\app-a-standalone.ova"
+$RouterOVA = "${mypath}\Templates\jammy-server-cloudimg-amd64.ova"
+$RouterUserDataPath = "${mypath}\router-userdata.yaml"
 
 # Nested ESXi VMs to deploy
 $NestedESXiHostnameToIPs = @{
@@ -119,6 +124,13 @@ $NFSVMPrefix = "24"
 $NFSVMVolumeLabel = "nfs"
 $NFSVMCapacity = "500" #GB
 $NFSVMRootPassword = $defaultPassword
+
+# If Routing for VM segment is needed
+$RouterVMDisplayName = "router-${groupNumber}-${labNumber}"
+$RouterVMHostname = "router-${groupNumber}-${labNumber}.avs.lab"
+$RouterVMIPAddress = "10.${groupNumber}.${labNumber}.8"
+$RouterVMPrefix = "24"
+$RouterVMPassword = $defaultPassword
 
 # VCSA Deployment Configuration
 $VCSADeploymentSize = "small"
@@ -178,6 +190,7 @@ $configureESXiStorage = $true
 $configureVDS = $true
 $moveVMsIntovApp = $true
 $deployWorkload = $true
+$deployRouting = $true
 
 $vcsaSize2MemoryStorageMap = @{
     "tiny"   = @{"cpu" = "2"; "mem" = "12"; "disk" = "415" };
@@ -214,6 +227,13 @@ if ($preCheck) {
     if ($deployWorkload) {
         if (!(Test-Path $PhotonOSOVA)) {
             Write-Host -ForegroundColor Red "`nUnable to find $PhotonOSOVA ...`n"
+            exit
+        }
+    }
+
+    if ($deployRouting) {
+        if (!(Test-Path $RouterOVA)) {
+            Write-Host -ForegroundColor Red "`nUnable to find $RouterOVA ...`n"
             exit
         }
     }
@@ -334,13 +354,24 @@ if ($confirmDeployment) {
     Write-Host -NoNewline -ForegroundColor White $nfsMemory " GB "
     Write-Host -NoNewline -ForegroundColor Green "NFS      VM Storage: "
     Write-Host -ForegroundColor White $NFSVMCapacity " GB"
+    
+    $routerCPU = 2
+    $routerMemory = 1
+    $routerStorage = 10
+    Write-Host -NoNewline -ForegroundColor Green "Router   VM CPU: "
+    Write-Host -NoNewline -ForegroundColor White $routerCPU
+    Write-Host -NoNewline -ForegroundColor Green " Router   VM Memory: "
+    Write-Host -NoNewline -ForegroundColor White $routerMemory " GB "
+    Write-Host -NoNewline -ForegroundColor Green "Router   VM Storage: "
+    Write-Host -ForegroundColor White $routerStorage " GB"
+
     Write-Host -ForegroundColor White "---------------------------------------------"
     Write-Host -NoNewline -ForegroundColor Green "Total CPU: "
-    Write-Host -ForegroundColor White ($esxiTotalCPU + $vcsaTotalCPU + $nsxManagerTotalCPU + $nsxEdgeTotalCPU + $nfsCPU)
+    Write-Host -ForegroundColor White ($esxiTotalCPU + $vcsaTotalCPU + $nsxManagerTotalCPU + $nsxEdgeTotalCPU + $nfsCPU + $routerCPU)
     Write-Host -NoNewline -ForegroundColor Green "Total Memory: "
-    Write-Host -ForegroundColor White ($esxiTotalMemory + $vcsaTotalMemory + $nsxManagerTotalMemory + $nsxEdgeTotalMemory + $nfsMemory) "GB"
+    Write-Host -ForegroundColor White ($esxiTotalMemory + $vcsaTotalMemory + $nsxManagerTotalMemory + $nsxEdgeTotalMemory + $nfsMemory + $routerMemory) "GB"
     Write-Host -NoNewline -ForegroundColor Green "Total Storage: "
-    Write-Host -ForegroundColor White ($esxiTotalStorage + $vcsaTotalStorage + $nsxManagerTotalStorage + $nsxEdgeTotalStorage + $nfsStorage) "GB"
+    Write-Host -ForegroundColor White ($esxiTotalStorage + $vcsaTotalStorage + $nsxManagerTotalStorage + $nsxEdgeTotalStorage + $nfsStorage + $routerStorage) "GB"
     Write-Host -ForegroundColor White "---------------------------------------------"
     Write-Host -ForegroundColor Magenta "`nWould you like to proceed with this deployment?`n"
     if (-Not $automated) {
@@ -393,25 +424,7 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     $tzSvc = Get-NsxtService -Name com.vmware.nsx.transport_zones
     $tzones = $tzSvc.list()
     $tzoneOverlay = $tzones.results | Where-Object { $_.display_name -like 'TNT**-OVERLAY-TZ' }
-    #TODO: Test if commenting the following line will cause any problem
-    #$tzoneOverlayID = $tzoneOverlay.id
     $tzoneOverlay = $tzoneOverlay.display_name
-
-    #TODO: Get-NsxtPolicyService is depricated, need to find alternative
-    #Solution is as below but need to test switching from Connect-NsxtServer to Connect-NsxServer 
-    <#
-    #References: https://blogs.vmware.com/networkvirtualization/2022/05/navigating-nsx-module-in-powercli-12-6.html/
-    #            https://github.com/vmware-samples/nsx-t/tree/master/powercli
-
-    Connect-NsxServer -Server $nsxtHost -User $nsxtUser -Password $nsxtPass
-    $tzs = Invoke-ListTransportZonesForEnforcementPoint -EnforcementpointId "default" -SiteId "default"
-    $tzPath = ($tzs.Results | Where-Object { $_.DisplayName -match 'TNT\d{2}-OVERLAY-TZ' }).Path | Select-Object -First 1
-    #>
-
-    #TODO: Test if commenting the following line will cause any problem
-    #$transportZonePolicyService = Get-NsxtPolicyService -Name "com.vmware.nsx_policy.infra.sites.enforcement_points.transport_zones"
-    #$tzPath = ($transportZonePolicyService.list("default", "default").results | where { $_.display_name -like "TNT**-OVERLAY-TZ" }).path
-
 
     # Get Default T1 Gateway
     Write-Log "Getting NSX-T Default T1 Gateway"
@@ -419,8 +432,6 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     $t1svc = Get-NsxtService -Name com.vmware.nsx.logical_routers
     $t1list = $t1Svc.list()
     $t1result = $t1list.results | Where-Object { $_.display_name -like 'TNT**-T1' }
-    #TODO: Test if commenting the following line will cause any problem
-    #$t1ID = $t1result.id
     $t1Name = $t1result.display_name
 
     # Create Segment Profiles
@@ -554,7 +565,6 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     ## Create Network Segment for Nested Lab
     Write-Log "Creating Network in AVS NSX-T for Nested Lab ${labNumber}"
 
-    $network = $VMNetwork
     $segmentName = $VMNetwork
     $gatewayaddress = $VMNetworkCIDR
     Write-Log "Creating $segmentName....."
@@ -576,16 +586,16 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     }
 "@
  
-    # the following was removed from the $Body content above
-    # ,
-    #"transport_zone_path": "/infra/sites/default/enforcement-points/default/transport-zones/$tzoneOverlayID"
-
-    $patchSegmentURL = "https://$nsxtHost/policy/api/v1/infra/tier-1s/$t1Name/segments/" + $segmentName
-    $segmentCreation = Invoke-RestMethod -Uri $patchSegmentURL -Headers $Header -Method Patch -Body $Body -ContentType "application/json" -SkipCertificateCheck
-        
-    Write-Log "$segmentName created....."
-    sleep 15
-
+    $segmentURL = "https://$nsxtHost/policy/api/v1/infra/tier-1s/$t1Name/segments/" + $segmentName
+    $existingSegment = Invoke-WebRequest -Uri $segmentURL -Headers $Header -Method GET -SkipCertificateCheck -SkipHttpErrorCheck
+    if ($existingSegment.StatusCode -eq 200) {
+        Write-Log "A segment $segmentName already exists, will reuse it"
+    } else {
+        $segmentCreation = Invoke-RestMethod -Uri $segmentURL -Headers $Header -Method Patch -Body $Body -ContentType "application/json" -SkipCertificateCheck
+        Write-Log "Segment $segmentName created....."
+        sleep 15
+    }
+    
     ## Adding Security Segment Profile
     Write-Log "Adding Security Segment Profile to $segmentName ....."
 
@@ -641,13 +651,6 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
 
     # Get Logical Switch Information
     Write-Log "Getting Logical Switch Information for $segmentName"
-
-    #TODO: Test if commenting the following line will cause any problem
-    #$lssvc = Get-NsxtService -Name com.vmware.nsx.logical_switches
-    #$lslist = $lsSvc.list()
-    #$lsresult = $lslist.results | Where-Object { $_.display_name -eq "$network" }
-    #$lsID = $lsresult.id
-    #$lsName = $lsresult.display_name
 
     # Gather AVS vCenter Information
     $datastore = Get-Datastore -Server $viConnection -Name $VMDatastore | Select -First 1
@@ -716,10 +719,10 @@ if ($deployNFSVM) {
 
 if ($deployVCSA) {
     if ($IsWindows) {
-        $config = (Get-Content -Raw "$($VCSAInstallerPath)\vcsa-cli-installer\templates\install\embedded_vCSA_on_VC.json") | convertfrom-json
+        $config = (Get-Content -Raw "$($VCSAInstallerPath)\vcsa-cli-installer\templates\install\embedded_vCSA_on_VC.json") | ConvertFrom-Json
     }
     else {
-        $config = (Get-Content -Raw "$($VCSAInstallerPath)/vcsa-cli-installer/templates/install/embedded_vCSA_on_VC.json") | convertfrom-json
+        $config = (Get-Content -Raw "$($VCSAInstallerPath)/vcsa-cli-installer/templates/install/embedded_vCSA_on_VC.json") | ConvertFrom-Json
     }
 
     $config.'new_vcsa'.vc.hostname = $VIServer
@@ -750,7 +753,7 @@ if ($deployVCSA) {
 
     if ($IsWindows) {
         Write-Log "Creating VCSA JSON Configuration file for deployment ..."
-        $config | ConvertTo-Json | Set-Content -Path "$($ENV:Temp)\jsontemplate.json"
+        $config | ConvertTo-Json -WarningAction SilentlyContinue | Set-Content -Path "$($ENV:Temp)\jsontemplate.json"
         $target = "[`"$VMCluster`",`"Resources`",`"$VMResourcePool`"]"
             (Get-Content -path "$($ENV:Temp)\jsontemplate.json" -Raw) -replace '"REPLACE-ME"', $target | Set-Content -path "$($ENV:Temp)\jsontemplate.json"
 
@@ -759,22 +762,24 @@ if ($deployVCSA) {
     }
     elseif ($IsMacOS) {
         Write-Log "Creating VCSA JSON Configuration file for deployment ..."
-        $config | ConvertTo-Json | Set-Content -Path "$($ENV:TMPDIR)jsontemplate.json"
+        $config | ConvertTo-Json -WarningAction SilentlyContinue | Set-Content -Path "$($ENV:TMPDIR)jsontemplate.json"
 
         Write-Log "Deploying the VCSA ..."
         Invoke-Expression "$($VCSAInstallerPath)/vcsa-cli-installer/mac/vcsa-deploy install --no-ssl-certificate-verification --accept-eula --acknowledge-ceip $($ENV:TMPDIR)jsontemplate.json" | Out-File -Append -LiteralPath $verboseLogFile
     }
     elseif ($IsLinux) {
         Write-Log "Creating VCSA JSON Configuration file for deployment ..."
-        $config | ConvertTo-Json | Set-Content -Path "/tmp/jsontemplate.json"
+        $config | ConvertTo-Json -WarningAction SilentlyContinue | Set-Content -Path "/tmp/jsontemplate.json"
 
         Write-Log "Deploying the VCSA ..."
         Invoke-Expression "$($VCSAInstallerPath)/vcsa-cli-installer/lin64/vcsa-deploy install --no-ssl-certificate-verification --accept-eula --acknowledge-ceip /tmp/jsontemplate.json" | Out-File -Append -LiteralPath $verboseLogFile
     }
 }
 
-Write-Log "Disconnecting from $VIServer ..."
-Disconnect-VIServer -Server $viConnection -Confirm:$false
+if ($viConnection) {
+    Write-Log "Disconnecting from $VIServer ..."
+    Disconnect-VIServer -Server $viConnection -Confirm:$false
+}
 Write-Log "Reconnecting $VIServer"
 $viConnection = Connect-VIServer $VIServer -User $VIUsername -Password $VIPassword -WarningAction SilentlyContinue
 
@@ -890,7 +895,7 @@ if ($setupNewVC) {
         $vmhost = Get-Cluster -Server $vc | Get-VMHost | Select-Object -First 1
         $vcdatastore = Get-Datastore -Server $vc
         $appVMdns = "1.1.1.1"
-        $appVMGateway = "10.${groupNumber}.1${labNumber}.128"
+        $appVMGateway = "10.${groupNumber}.1${labNumber}.129"
         $appVMIP = "10.${groupNumber}.1${labNumber}.128"
 
         $ovfconfig = Get-OvfConfiguration $PhotonOSOVA
@@ -902,8 +907,6 @@ if ($setupNewVC) {
             $a, $b, $c, $d = $appVMIP.Split(".")
             $d = [int]$d + $i+1
             $newappVMIP = "${a}.${b}.${c}.${d}"
-            #TODO: Test if commenting the following line will cause any problem
-            #$ovfCommonLabel = ($ovfconfig.Common.guestinfo | Get-Member -MemberType Properties).Name
             $ovfconfig.Common.guestinfo.dns.value = "$appVMdns"
             $ovfconfig.Common.guestinfo.gateway.value = "$appVMgateway"
             $ovfconfig.Common.guestinfo.ipaddress.value = "$newappVMip"
@@ -912,9 +915,88 @@ if ($setupNewVC) {
             Write-Log "Deploying $VMName with IP $newappVMIP ..."
             $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $vmhost -Datastore $vcdatastore -DiskStorageFormat thin -Force    
             $vm | Start-VM -Server $vc -Confirm:$false | Out-Null
-            Write-Log "$VMName deployed successfully and was powered on ..."
+            }
+    }
+
+    if ($deployRouting) {
+        $vmhost = Get-Cluster -Server $vc | Get-VMHost | Select-Object -First 1
+        $vcdatastore = Get-Datastore -Server $vc
+        
+        $ovfconfig = Get-OvfConfiguration $RouterOVA
+
+        # Primary network mapping
+        $ovfNetworkLabel = ($ovfconfig.NetworkMapping | Get-Member -MemberType Properties).Name
+        $ovfconfig.NetworkMapping.$ovfNetworkLabel.value = $NewVCMgmtDVPGName
+   
+        # Cloud Init
+        $routerUserData = Get-Content -Path $RouterUserDataPath | Out-String
+        $routerUserData = $routerUserData.Replace("__PRIMARY_IPADDRESS__", $RouterVMIPAddress)
+        $routerUserData = $routerUserData.Replace("__PRIMARY_NETMASK__", $RouterVMPrefix)
+        $routerUserData = $routerUserData.Replace("__PRIMARY_GATEWAY__", $VMGateway)
+        $routerUserData = $routerUserData.Replace("__SECONDIP_ADDRESS__", "10.${groupNumber}.1${labNumber}.129")
+        $routerUserData = $routerUserData.Replace("__SECONDARY_NETMASK__", "27")
+
+        # Prepare string for b64 encoding
+        $routerUserDataBytes = [System.Text.Encoding]::UTF8.GetBytes($routerUserData)
+
+        # OVF properties
+        $ovfconfig.Common.hostname.value = $RouterVMHostname
+        $ovfconfig.Common.instance_id.value = New-Guid
+        $ovfconfig.Common.password.value = $RouterVMPassword
+        $ovfconfig.Common.user_data.value = [Convert]::ToBase64String($routerUserDataBytes)
+
+        Write-Log "Deploying Routing VM $RouterVMDisplayName ..."
+        $vm = Import-VApp -Server $vc -Source $RouterOVA -OvfConfiguration $ovfconfig -Name $RouterVMHostname -VMHost $VMhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
+
+        Write-Log "Attaching Routing VM $RouterVMDisplayName to workload segment..."
+        New-NetworkAdapter -VM $vm -NetworkName $NewVCWorkloadDVPGName -StartConnected | Out-Null
+
+        Write-Log "Powering On $RouterVMDisplayName ..."
+        $vm | Start-Vm | Out-Null # wait for tools
+
+        # Create static route on NSX segment to reach VM segment
+        # Connecting to NSX-T Manager
+        Write-Log "Connecting to NSX-T Server $nsxtHost ..."
+        $nsxtConnection = Connect-NsxServer -Server ${nsxtHost} -User ${nsxtUser} -Password ${nsxtPass}
+        Write-Log "Connected to NSX-T Server"
+        # Get Default T1 Gateway
+        Write-Log "Getting NSX-T Default T1 Gateway"
+        $t1result = (Invoke-ListTier1 -Server $nsxtConnection).results | Where-Object { $_.DisplayName -like 'TNT**-T1' }
+        $t1Name = $t1result.DisplayName
+
+        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$($nsxtUser):$($nsxtPass)"))
+        $Header = @{
+            Authorization = "Basic $base64AuthInfo"
         }
-        Write-Log "Workload VMs deployed successfully ..."
+    
+        # Remove existing route with same name
+        $existingRoute = (Invoke-ListTier1StaticRoutes -Server $nsxtConnection -Tier1Id $t1Name).Results | Where-Object { 
+            $_.network -eq "10.${groupNumber}.1${labNumber}.128/27"
+        }
+        if ($existingRoute) {
+            Write-Log "Removing an exisitng route with same network target"
+            $sRouteURL = "https://$nsxtHost/policy/api/v1/infra/tier-1s/$t1Name/static-routes/" + $existingRoute.Id
+            Invoke-RestMethod -Uri $sRouteURL -Headers $Header -Method DELETE -ContentType "application/json" -SkipCertificateCheck
+            Start-Sleep 15
+        }
+        
+        $Body = @"
+        {
+            "display_name": "$NewVcVAppName",
+            "network": "10.${groupNumber}.1${labNumber}.128/27",
+            "next_hops":[
+                {
+                    "admin_distance":1,
+                    "ip_address": "$RouterVMIPAddress"
+                }
+            ],
+            "id":"$NewVcVAppName"
+        }
+"@
+        $sRouteURL = "https://$nsxtHost/policy/api/v1/infra/tier-1s/$t1Name/static-routes/$NewVcVAppName"
+        $sRoute = Invoke-RestMethod -Uri $sRouteURL -Headers $Header -Method PUT -Body $Body -ContentType "application/json" -SkipCertificateCheck
+        Start-Sleep 15
+        Write-Log "Static route $NewVcVAppName created....."
     }
 
     Write-Log "Disconnecting from new VCSA ..."
