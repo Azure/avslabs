@@ -5,16 +5,16 @@
 # Website: www.avshub.io
 
 param (
-    # Description: "Group number for the set of nested labs to deploy. Default is 1."
+    # Description: "Group number for the set of nested labs to deploy."
     [Parameter(Mandatory)]
     [ValidateRange(1, 50)]
-    [Alias("GroupNumber")] 
+    [Alias("GroupNumber")]
     [Int] $group,
     
-    # Description: "Number of nested labs to be deployed. Default is 4."
+    # Description: "Number of nested labs to be deployed."
     [Parameter(Mandatory)]
     [ValidateRange(1, 50)]
-    [Alias("LabNumber")] 
+    [Alias("LabNumber")]
     [Int] $lab,
 
     # Description: "Is deployment in fully automated mode. Default to $false."
@@ -424,7 +424,24 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     $tzSvc = Get-NsxtService -Name com.vmware.nsx.transport_zones
     $tzones = $tzSvc.list()
     $tzoneOverlay = $tzones.results | Where-Object { $_.display_name -like 'TNT**-OVERLAY-TZ' }
+    #TODO: Test if commenting the following line will cause any problem
+    #$tzoneOverlayID = $tzoneOverlay.id
     $tzoneOverlay = $tzoneOverlay.display_name
+
+    #TODO: Get-NsxtPolicyService is depricated, need to find alternative
+
+    #Solution is as below but need to test switching from Connect-NsxtServer to Connect-NsxServer 
+    <#
+    #References: https://blogs.vmware.com/networkvirtualization/2022/05/navigating-nsx-module-in-powercli-12-6.html/
+    #            https://github.com/vmware-samples/nsx-t/tree/master/powercli
+    Connect-NsxServer -Server $nsxtHost -User $nsxtUser -Password $nsxtPass
+    $tzs = Invoke-ListTransportZonesForEnforcementPoint -EnforcementpointId "default" -SiteId "default"
+    $tzPath = ($tzs.Results | Where-Object { $_.DisplayName -match 'TNT\d{2}-OVERLAY-TZ' }).Path | Select-Object -First 1
+    #>
+
+    #TODO: Test if commenting the following line will cause any problem
+    #$transportZonePolicyService = Get-NsxtPolicyService -Name "com.vmware.nsx_policy.infra.sites.enforcement_points.transport_zones"
+    #$tzPath = ($transportZonePolicyService.list("default", "default").results | where { $_.display_name -like "TNT**-OVERLAY-TZ" }).path
 
     # Get Default T1 Gateway
     Write-Log "Getting NSX-T Default T1 Gateway"
@@ -432,6 +449,8 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     $t1svc = Get-NsxtService -Name com.vmware.nsx.logical_routers
     $t1list = $t1Svc.list()
     $t1result = $t1list.results | Where-Object { $_.display_name -like 'TNT**-T1' }
+    #TODO: Test if commenting the following line will cause any problem
+    #$t1ID = $t1result.id
     $t1Name = $t1result.display_name
 
     # Create Segment Profiles
@@ -651,6 +670,13 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
 
     # Get Logical Switch Information
     Write-Log "Getting Logical Switch Information for $segmentName"
+
+    #TODO: Test if commenting the following line will cause any problem
+    #$lssvc = Get-NsxtService -Name com.vmware.nsx.logical_switches
+    #$lslist = $lsSvc.list()
+    #$lsresult = $lslist.results | Where-Object { $_.display_name -eq "$network" }
+    #$lsID = $lsresult.id
+    #$lsName = $lsresult.display_name
 
     # Gather AVS vCenter Information
     $datastore = Get-Datastore -Server $viConnection -Name $VMDatastore | Select -First 1
@@ -915,7 +941,8 @@ if ($setupNewVC) {
             Write-Log "Deploying $VMName with IP $newappVMIP ..."
             $vm = Import-VApp -Server $vc -Source $PhotonOSOVA -OvfConfiguration $ovfconfig -Name $VMName -VMHost $vmhost -Datastore $vcdatastore -DiskStorageFormat thin -Force    
             $vm | Start-VM -Server $vc -Confirm:$false | Out-Null
-            }
+            Write-Log "$VMName deployed successfully and was powered on ..."
+        }
     }
 
     if ($deployRouting) {

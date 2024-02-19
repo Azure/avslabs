@@ -140,7 +140,7 @@ Yes, you can! 💡
       > [!NOTE]
       > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
       ```powershell
-      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
+      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
       ```
 
    5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
@@ -161,11 +161,11 @@ cd c:\Temp\
 
 ```yaml
 AVSvCenter:
-  URL: "X.Y.Z.2" # Please enter the URL for AVS vCenter, do not include https:// or any slashes
+  IP: "X.Y.Z.2" # Please enter the URL for AVS vCenter, do not include https:// or any slashes
   Username: "cloudadmin@vsphere.local" # AVS vCenter Username, should be consistent
   Password: "passwordvalue" #Enter the password for the cloudadmin@vsphere.local
 AVSNSXT:
-  Host: "X.Y.Z.3" # Please enter the URL for AVS NSX-T Manager, do not include https:// or any slashes
+  IP: "X.Y.Z.3" # Please enter the URL for AVS NSX-T Manager, do not include https:// or any slashes
   Username: "cloudadmin" # NSX-T Username from the Azure portal
   Password: "passwordvalue" # #Enter the password for the cloudadmin
 ```
@@ -174,7 +174,7 @@ AVSNSXT:
       > [!NOTE]
       > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
       ```powershell
-      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1
+      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
       ```
 
 ## Troubleshoot
@@ -201,10 +201,10 @@ You may want to clean nested labs as they could have already consumed and you wo
 
 ### Deploy out of a ScheduledTask context
 
-You can run `bootstrap.ps1` with parameter `-NoAuto` to initiate a deployement that will not use a ScheduleTask nor reboot the Jumbox.
+You can run `bootstrap.ps1` without parameter `-automated` to initiate a deployement that will not use a ScheduleTask nor reboot the Jumbox.
 
 ```powershell
-powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -NoAuto
+powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1
 ```
 
 You can then Open a PowerShell 7 session to run the deployement script:
