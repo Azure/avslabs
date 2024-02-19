@@ -14,8 +14,8 @@ param (
     [switch] $isMAG = $false,
 
     [Parameter()]
-    [Alias("NotAutomated")] 
-    [switch] $NoAuto = $false
+    [Alias("IsAutomated")] 
+    [switch] $automated = $false
 )
 
 # constant variables
@@ -191,14 +191,14 @@ Write-Log "Downloading bootstrap-nestedlabs.ps1 script"
 Get-BootstrapScript
 
 # if automated
-if (-Not($IsAuto)) {
+if ($automated) {
     Write-Log "Creating a Windows Scheduled Task to register bootstrap-nestedlabs.ps1 script, and trigger it on Jumpbox VM startup"
     Set-BootstrapScheduledTask
 }
 
 Write-Log "Downloading nested labs Zip package"
 $retNestedLabPackage=Get-NestedLabPackage
-if (-Not($NoAuto) -and $retNestedLabPackage) {
+if ($automated -and $retNestedLabPackage) {
     Write-Log "Rebooting Jumpbox VM"
     Set-Jumpbox
 } else {

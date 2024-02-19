@@ -245,7 +245,7 @@ function Set-NestedLabPackage {
 }
 
 
-function Get-NestedLabConfigurations {
+function Get-NestedLabConfigurationsFromManagedIdentity {
     # This script block grabs AVS credentials and store them in a variable that is required to run the nested lab deployment script.
     # It uses a Managed Identity of the Jumpbox VM that has Contributor access over AVS Private Cloud
 
@@ -276,7 +276,7 @@ function Get-NestedLabConfigurations {
 
     $configs = @{"AVSvCenter" = @{"IP" = $vcsaIP; "Username" = $credsJson.vcenterUsername; "Password" = $credsJson.vcenterPassword }; "AVSNSXT" = @{"IP" = $nsxtIP; "Username" = $credsJson.nsxtUsername; "Password" = $credsJson.nsxtPassword } }
     
-    Write-Log "|--Get-NestedLabConfigurations - Grabbed AVS Credentials"
+    Write-Log "|--Get-NestedLabConfigurationsFromManagedIdentity - Grabbed AVS Credentials"
     
     #$configs | ConvertTo-Json
 
@@ -287,6 +287,19 @@ function Get-NestedLabConfigurations {
 
     #return (Test-Path $ExtractionPath\nestedlabs.yml)
     return $configs
+}
+
+function Set-NestedLabConfigurationsFromYaml {
+    # Set a copy of nestedlabs.yml file to the extraction path. If the file does not exist, the function will return false
+    #  and script proceed to use the VM managed identity to authenticate to AVS and get AVS credentials.
+    if (Test-Path "$TempPath\nestedlabs.yml" -PathType Leaf) {
+        Write-Log "Building labs without using the System Assigned Managed Identity"
+        Copy-Item "$TempPath\nestedlabs.yml" "$ExtractionPath\nestedlabs.yml"
+    } else {
+        Write-Log "No file $TempPath\nestedlabs.yml found. Building labs using the System Assigned Managed Identity."
+        return $false
+    }
+    return $true
 }
 
 function Enable-AVSPrivateCloudInternetViaSNAT {
@@ -404,11 +417,14 @@ Write-Log "Setting basic requirements for labdeploy.ps1 script (i.e.: installing
 if (Set-NestedLabRequirement) {
     Write-Log "Extracting nested labs Zip package"
     if (Set-NestedLabPackage) {
-        if (-not(Test-Path $ConfigurationFile)) {
+        if (Set-NestedLabConfigurationsFromYaml) {
+            Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs
+        } else {
+            # If there is no YAML configuration file: try to use VM managed identity to authenticate to AVS and get AVS credentials
             Write-Log "Validation authentication to AVS from Jumpbox VM (i.e.: making sure Jumpbox VM managed identity has contributor permission over AVS Private Cloud resource)"
             if (Test-AuthenticationToAVS) {
                 Write-Log "Getting AVS credentials information that is required by labdeploy.ps1 script"
-                $AVSInfo = Get-NestedLabConfigurations
+                $AVSInfo = Get-NestedLabConfigurationsFromManagedIdentity
                 if ($AVSInfo.Count -eq 2) {
                     Write-Log "Checking if AVS provisioning state is 'Succeeded' (i.e. making sure AVS is ready for next steps)"
                     if (Test-AVSReadiness) {
@@ -420,17 +436,10 @@ if (Set-NestedLabRequirement) {
                     }
                 }
             }
-        } else {
-            Write-Log "Building labs without using the System Assigned Managed Identity"
-            if (Test-Path "$TempPath/nestedlabs.yml" -PathType Leaf) {
-                Copy-Item "$TempPath/nestedlabs.yml" "$ExtractionPath/nestedlabs.yml"
-            } else {
-                Write-Log "Missing file $TempPath/nestedlabs.yml to build labs without System Assigned Managed Identity"
-            }
-            Build-NestedLab -GroupNumber $GroupNumber -NumberOfNestedLabs $NumberOfNestedLabs
         }
     }
 }
+
 Write-Log "Finalizing execution by disabling Windows Scheduled Task"
 Complete-NestedLabDeployment
 
