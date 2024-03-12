@@ -11,7 +11,11 @@ param (
 
     [Parameter()]
     [Alias("IsAzureGovernment")] 
-    [switch] $isMAG = $false
+    [switch] $isMAG = $false,
+
+    [Parameter()]
+    [Alias("IsAutomated")] 
+    [switch] $automated = $false
 )
 
 # constant variables
@@ -40,6 +44,9 @@ function Write-Log {
     $timeStamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
     $logMessage = "[$timeStamp] $message"
     Add-content $LogFile -value $LogMessage
+    if (-not($IsAuto)) {
+        Write-Host $logMessage
+    }
 }
 
 function Test-TempDirectory {
@@ -65,11 +72,11 @@ function Install-Applications {
 
     Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-    choco install powershell-core -y
-    choco install azcopy10 -y
-    choco install azure-cli -y
-    choco install 7zip -y
-    choco install VMRC -y
+    choco install powershell-core   -y -WarningAction SilentlyContinue
+    choco install azcopy10          -y -WarningAction SilentlyContinue
+    choco install azure-cli         -y -WarningAction SilentlyContinue
+    choco install 7zip              -y -WarningAction SilentlyContinue
+    choco install VMRC              -y -WarningAction SilentlyContinue
 
     #Optional
     #choco install vscode -y
@@ -183,13 +190,20 @@ Test-TempDirectory
 Write-Log "Downloading bootstrap-nestedlabs.ps1 script"
 Get-BootstrapScript
 
-Write-Log "Creating a Windows Scheduled Task to register bootstrap-nestedlabs.ps1 script, and trigger it on Jumpbox VM startup"
-Set-BootstrapScheduledTask
+# if automated
+if ($automated) {
+    Write-Log "Creating a Windows Scheduled Task to register bootstrap-nestedlabs.ps1 script, and trigger it on Jumpbox VM startup"
+    Set-BootstrapScheduledTask
+}
 
 Write-Log "Downloading nested labs Zip package"
-if (Get-NestedLabPackage) {
+$retNestedLabPackage=Get-NestedLabPackage
+if ($automated -and $retNestedLabPackage) {
     Write-Log "Rebooting Jumpbox VM"
     Set-Jumpbox
+} else {
+    Write-Host "Lab preparation is not in full automated mode. Next step:"
+    Write-Host "  powershell.exe -ExecutionPolicy Unrestricted -File c:\temp\bootstrap-nestedlabs.ps1 -GroupId X -Labs Y"
 }
 
 Write-Log "Concluding Execution"
