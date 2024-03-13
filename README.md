@@ -91,11 +91,9 @@ Yes, you can! 💡
 
    ```powershell
    #Example
-   
    $jumpboxVMName = "AVSJumpBox"
    $jumpboxVMResourceGroup = "Management-RG"
    az vm identity assign -g $jumpboxVMResourceGroup -n $jumpboxVMName
-
    # $spID=$(az vm identity assign -g $jumpboxVMResourceGroup -n $jumpboxVMName --query systemAssignedIdentity --out tsv)
    ```
 
@@ -168,16 +166,16 @@ In case you cannot deploy a System Assigned Managed Identity on the Jump server 
 
    3) Create file `C:\Temp\nestedlabs.yaml` with the following content and replace the values with the ones matching your environment:
 
-```yaml
-AVSvCenter:
-  IP: "X.Y.Z.2" # Please enter the URL for AVS vCenter, do not include https:// or any slashes
-  Username: "cloudadmin@vsphere.local" # AVS vCenter Username, should be consistent
-  Password: "passwordvalue" #Enter the password for the cloudadmin@vsphere.local
-AVSNSXT:
-  IP: "X.Y.Z.3" # Please enter the URL for AVS NSX-T Manager, do not include https:// or any slashes
-  Username: "cloudadmin" # NSX-T Username from the Azure portal
-  Password: "passwordvalue" # #Enter the password for the cloudadmin
-```
+      ```yaml
+      AVSvCenter:
+         IP: "X.Y.Z.2" # Please enter the URL for AVS vCenter, do not include https:// or any slashes
+         Username: "cloudadmin@vsphere.local" # AVS vCenter Username, should be consistent
+         Password: "passwordvalue" #Enter the password for the cloudadmin@vsphere.local
+      AVSNSXT:
+         IP: "X.Y.Z.3" # Please enter the URL for AVS NSX-T Manager, do not include https:// or any slashes
+         Username: "cloudadmin" # NSX-T Username from the Azure portal
+         Password: "passwordvalue" # #Enter the password for the cloudadmin
+      ```
 
    4) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
 
@@ -216,15 +214,15 @@ You may want to clean nested labs as they could have already consumed and you wo
 
 You can run `bootstrap.ps1` without parameter `-automated` to initiate a deployment that will not use a ScheduleTask nor reboot the Jumpbox.
 
-```powershell
-powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1
-```
+   ```powershell
+   powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1
+   ```
 
 You can then Open a PowerShell 7 session to run the deployment script:
 
-```powershell
-pwsh.exe -ExecutionPolicy Unrestricted -WorkingDirectory "c:\temp" -File "c:\temp\bootstrap-nestedlabs.ps1" -GroupId X -Labs Y
-```
+   ```powershell
+   pwsh.exe -ExecutionPolicy Unrestricted -WorkingDirectory "c:\temp" -File "c:\temp\bootstrap-nestedlabs.ps1" -GroupId X -Labs Y
+   ```
 
 
 ### Restart a deployment from a specific lab index
