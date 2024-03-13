@@ -121,7 +121,7 @@ Yes, you can! 💡
    powershell.exe -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\ -Name Temp -ItemType Directory -ErrorAction Ignore; Invoke-WebRequest -Uri https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1 -OutFile C:\Temp\bootstrap.ps1; Unblock-File -Path C:\Temp\bootstrap.ps1"
    ```
 
-### How to execute?
+### How to execute? 🧑🏻‍💻
 
    1) From Jumpbox VM, open Command Prompt (cmd.exe).
    2) Change directory to C:\Temp by running:
@@ -136,9 +136,9 @@ Yes, you can! 💡
 > [!NOTE]
 > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
 
-      ```powershell
-      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
-      ```
+   ```powershell
+   powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
+   ```
 
    5) **You can track progress** by keeping an eye on `bootstrap.log` and `bootstrap-nestedlabs.log` which will be created in **C:\Temp** directory.
 
@@ -177,9 +177,9 @@ In case you cannot deploy a System Assigned Managed Identity on the Jumpbox VM u
 > [!NOTE]
 > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
 
-      ```powershell
-      powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
-      ```
+   ```powershell
+   powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
+   ```
 
 ## Troubleshoot
 
