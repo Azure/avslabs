@@ -1,8 +1,7 @@
 # Credits to:
-# William Lam - VMware
-# Website: www.williamlam.com
-# Roberto Canton & Husam Hilal - Microsoft GPS US
-# Website: www.avshub.io
+# William Lam
+# Roberto Canton & Husam Hilal & Ludovic Rivallain
+# Website: https://aka.ms/AVSLabs
 
 param (
     # Description: "Group number for the set of nested labs to deploy."
@@ -94,7 +93,7 @@ $VMNetwork = "Group-${groupNumber}-${labNumber}-NestedLab"
 $VMNetworkCIDR = "10.${groupNumber}.${labNumber}.1/24"
 
 # Full Path to both the Nested ESXi VA and Extracted VCSA ISO
-$NestedESXiApplianceOVA = "${mypath}\Templates\Nested_ESXi7.0u3c.ova"
+$NestedESXiApplianceOVA = "${mypath}\Templates\Nested_ESXi7.0u3p_Appliance_Template_v1.ova"
 $VCSAInstallerPath = "${mypath}\Templates\VCSA7-Install"
 $PhotonNFSOVA = "${mypath}\Templates\PhotonOS_NFS_Appliance_0.1.0.ova"
 $PhotonOSOVA = "${mypath}\Templates\app-a-standalone.ova"
@@ -976,7 +975,7 @@ if ($setupNewVC) {
         $vm = Import-VApp -Server $vc -Source $RouterOVA -OvfConfiguration $ovfconfig -Name $RouterVMHostname -VMHost $VMhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
 
         Write-Log "Attaching Routing VM $RouterVMDisplayName to workload segment..."
-        New-NetworkAdapter -VM $vm -NetworkName $NewVCWorkloadDVPGName -StartConnected | Out-Null
+        New-NetworkAdapter -VM $vm -Portgroup $NewVCWorkloadDVPGName -StartConnected | Out-Null
 
         Write-Log "Powering On $RouterVMDisplayName ..."
         $vm | Start-Vm | Out-Null # wait for tools
@@ -1024,6 +1023,11 @@ if ($setupNewVC) {
         $sRoute = Invoke-RestMethod -Uri $sRouteURL -Headers $Header -Method PUT -Body $Body -ContentType "application/json" -SkipCertificateCheck
         Start-Sleep 15
         Write-Log "Static route $NewVcVAppName created....."
+
+        Write-Log "Disconnecting from NSX ..."
+        if ($nsxtConnection) {
+            Disconnect-NsxServer -Connection $nsxtConnection #-ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+        }
     }
 
     Write-Log "Disconnecting from new VCSA ..."

@@ -72,11 +72,11 @@ function Install-Applications {
 
     Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-    choco install powershell-core   -y -WarningAction SilentlyContinue
-    choco install azcopy10          -y -WarningAction SilentlyContinue
-    choco install azure-cli         -y -WarningAction SilentlyContinue
-    choco install 7zip              -y -WarningAction SilentlyContinue
-    choco install VMRC              -y -WarningAction SilentlyContinue
+    choco install powershell-core -y
+    choco install azcopy10 -y
+    choco install azure-cli -y
+    choco install 7zip -y
+    choco install VMRC -y
 
     #Optional
     #choco install vscode -y
@@ -94,7 +94,7 @@ function Get-BootstrapScript {
     
     if (Test-Path $MainBootstrapPackagePath -PathType Leaf) {
         Write-Log "|--Get-BootstrapScript - Nested labs bootstrap script 'bootstrap.ps1' already exists"
-    }else {
+    } else {
         Write-Log "|--Get-BootstrapScript - Downloading nested labs bootstrap script 'bootstrap.ps1'"
         Start-BitsTransfer -Source $MainBootstrapScriptURL -Destination $TempPath -Priority High
     }
@@ -105,7 +105,7 @@ function Get-BootstrapScript {
 
     if (Test-Path $BootstrapPackagePath -PathType Leaf) {
         Write-Log "|--Get-BootstrapScript - Nested labs bootstrap script 'bootstrap-nestedlabs.ps1' already exists"
-    }else {
+    } else {
         Write-Log "|--Get-BootstrapScript - Downloading nested labs bootstrap script 'bootstrap-nestedlabs.ps1'"
         Start-BitsTransfer -Source $BootstrapScriptURL -Destination $TempPath -Priority High
     }
@@ -197,8 +197,8 @@ if ($automated) {
 }
 
 Write-Log "Downloading nested labs Zip package"
-$retNestedLabPackage=Get-NestedLabPackage
-if ($automated -and $retNestedLabPackage) {
+$nestedLabPackageResult = Get-NestedLabPackage
+if ($automated -and $nestedLabPackageResult) {
     Write-Log "Rebooting Jumpbox VM"
     Set-Jumpbox
 } else {

@@ -48,14 +48,16 @@ Here are the steps you need to take to deploy AVS Lab with nested VMware lab env
    ```
 
 3. Update Parameters File
-   > [!NOTE]
-   > Make sure to update the the parameter file with the right values, such as: **NumberOfAVSInstances**, **NumberOfNestedLabsInAVS**, **Prefix**, **Location**, **AlertEmails**, etc...
+
+> [!NOTE]
+> Make sure to update the the parameter file with the right values, such as: **NumberOfAVSInstances**, **NumberOfNestedLabsInAVS**, **Prefix**, **Location**, **AlertEmails**, etc...
 
 4. Execute the Deployment
 
    **From Azure CLI run the deployment command as in the following examples.**
-   > [!NOTE]
-   >Make sure to provide the a unique **name** for the deployment, the right **location**, your deployment choice **bicep file** and the corresponding **parameter file**.
+
+> [!NOTE]
+> Make sure to provide the a unique **name** for the deployment, the right **location**, your deployment choice **bicep file** and the corresponding **parameter file**.
 
    ```azurecli
    az deployment sub create -n "<deployment-unique-name" -l "<location>" -f "<bicep-template-file-name>" -p "<corresponding-parameter-file>" --no-wait
@@ -73,7 +75,7 @@ Here are the steps you need to take to deploy AVS Lab with nested VMware lab env
    az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.LAB.deploy.bicep" -p "ESLZDeploy.LAB.deploy.bicep.parameters.json" --no-wait
    ```
 
-For a reference to az deployment command, see [this](https://learn.microsoft.com/en-us/cli/azure/deployment/sub?view=azure-cli-latest#az-deployment-sub-create)
+For a reference to *az* deployment command, see [this](https://learn.microsoft.com/en-us/cli/azure/deployment/sub?view=azure-cli-latest#az-deployment-sub-create)
 
 ## What if I already have AVS deployed? Can I just provision the nested lab/s?
 
@@ -99,8 +101,8 @@ Yes, you can! 💡
 
 3) System Assigned Managed Identity enabled on the Jumpbox.
 
-   > [!IMPORTANT] 
-   > Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
+> [!IMPORTANT]
+> Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
 
 4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
 
@@ -132,13 +134,17 @@ Yes, you can! 💡
 
    1) From Jumpbox VM, open Command Prompt (cmd.exe).
    2) Change directory to C:\Temp by running:
+
       ```powershell
       cd c:\Temp
       ```
+
    3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
    4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
-      > [!NOTE]
-      > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
+
+> [!NOTE]
+> If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
+
       ```powershell
       powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
       ```
@@ -146,6 +152,7 @@ Yes, you can! 💡
    5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
 
 ### What is the final result?
+
    The final result should be similar to what you see in the screenshot below. Notice the logs path. Also, notice the the nested lab vCenter IP address (i.e., 10.1.1.2), because GroupNumber was set to 1 and NumberOfNestedLabs was set to 1. ![screenshot](images/final-screenshot.png)
 
 ## No System Assigned Managed Identity
@@ -154,9 +161,11 @@ In case you cannot deploy a System Assigned Managed Identity on the Jump server 
 
    1) From Jumpbox VM, open Command Prompt (cmd.exe).
    2) Change directory to C:\Temp by running:
-```powershell
-cd c:\Temp\
-```
+
+      ```powershell
+      cd c:\Temp\
+      ```
+
    3) Create file `C:\Temp\nestedlabs.yaml` with the following content and replace the values with the ones matching your environment:
 
 ```yaml
@@ -169,10 +178,14 @@ AVSNSXT:
   Username: "cloudadmin" # NSX-T Username from the Azure portal
   Password: "passwordvalue" # #Enter the password for the cloudadmin
 ```
+
    4) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
-   5) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
-      > [!NOTE]
-      > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
+
+   5) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**.
+
+> [!NOTE]
+> If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
+
       ```powershell
       powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
       ```
@@ -201,16 +214,16 @@ You may want to clean nested labs as they could have already consumed and you wo
 
 ### Deploy out of a ScheduledTask context
 
-You can run `bootstrap.ps1` without parameter `-automated` to initiate a deployement that will not use a ScheduleTask nor reboot the Jumbox.
+You can run `bootstrap.ps1` without parameter `-automated` to initiate a deployment that will not use a ScheduleTask nor reboot the Jumpbox.
 
 ```powershell
 powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1
 ```
 
-You can then Open a PowerShell 7 session to run the deployement script:
+You can then Open a PowerShell 7 session to run the deployment script:
 
 ```powershell
-C:\Program Files\PowerShell\7\pwsh.exe -ExecutionPolicy Unrestricted -File c:\temp\bootstrap-nestedlabs.ps1 -GroupId X -Labs Y
+pwsh.exe -ExecutionPolicy Unrestricted -WorkingDirectory "c:\temp" -File "c:\temp\bootstrap-nestedlabs.ps1" -GroupId X -Labs Y
 ```
 
 
