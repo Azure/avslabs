@@ -61,17 +61,11 @@ Here are the steps you need to take to deploy AVS Lab with nested VMware lab env
 
    ```azurecli
    az deployment sub create -n "<deployment-unique-name" -l "<location>" -f "<bicep-template-file-name>" -p "<corresponding-parameter-file>" --no-wait
-   ```
 
-   As an example for **single lab** deployment:
-
-   ```azurecli
+   #An example for **single lab** deployment:
    az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.Single.LAB.deploy.bicep" -p "ESLZDeploy.Single.LAB.deploy.bicep.parameters.json" --no-wait
-   ```
 
-   As an example for **multiple lab** deployment:
-
-   ```azurecli
+   #An example for **multiple lab** deployment:
    az deployment sub create -n "AVS-LAB-2023-02-15" -l "brazilsouth" -f "ESLZDeploy.LAB.deploy.bicep" -p "ESLZDeploy.LAB.deploy.bicep.parameters.json" --no-wait
    ```
 
@@ -86,8 +80,8 @@ Yes, you can! 💡
 > [!NOTE]
 > You can use Azure Cloud Shell to run the script examples in step #2 and #3.
 
-1) AVS Private Cloud.
-2) Jumpbox that can reach out to AVS.
+1) AVS Private Cloud deployed.
+2) A deployed Jumpbox VM that can reach out to AVS Private Cloud.
 
    ```powershell
    #Example
@@ -97,7 +91,7 @@ Yes, you can! 💡
    # $spID=$(az vm identity assign -g $jumpboxVMResourceGroup -n $jumpboxVMName --query systemAssignedIdentity --out tsv)
    ```
 
-3) System Assigned Managed Identity enabled on the Jumpbox.
+3) System Assigned Managed Identity **enabled on the Jumpbox**.
 
 > [!IMPORTANT]
 > Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
@@ -118,7 +112,6 @@ Yes, you can! 💡
    } else {
      Write-Error -Message "The VM does not have System assigned managed identity. Please check previous step!"
    }
-   
    ```
 
 5) At Jumpbox VM, download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
@@ -138,7 +131,7 @@ Yes, you can! 💡
       ```
 
    3) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
-   4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**. 
+   4) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**.
 
 > [!NOTE]
 > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
@@ -147,15 +140,15 @@ Yes, you can! 💡
       powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
       ```
 
-   5) You can track progress by keeping an eye on **bootstrap.log** and **bootstrap-nestedlabs.log** which will be created in **C:\Temp** directory.
+   5) **You can track progress** by keeping an eye on `bootstrap.log` and `bootstrap-nestedlabs.log` which will be created in **C:\Temp** directory.
 
-### What is the final result?
+### What is the final result? 🤔
 
    The final result should be similar to what you see in the screenshot below. Notice the logs path. Also, notice the the nested lab vCenter IP address (i.e., 10.1.1.2), because GroupNumber was set to 1 and NumberOfNestedLabs was set to 1. ![screenshot](images/final-screenshot.png)
 
-## No System Assigned Managed Identity
+## How to execute without the need for System Assigned Managed Identity?
 
-In case you cannot deploy a System Assigned Managed Identity on the Jump server used to deploy resources, follow the follwing process:
+In case you cannot deploy a System Assigned Managed Identity on the Jumpbox VM used to deploy resources, see the following process:
 
    1) From Jumpbox VM, open Command Prompt (cmd.exe).
    2) Change directory to C:\Temp by running:
@@ -223,7 +216,6 @@ You can then Open a PowerShell 7 session to run the deployment script:
    ```powershell
    pwsh.exe -ExecutionPolicy Unrestricted -WorkingDirectory "c:\temp" -File "c:\temp\bootstrap-nestedlabs.ps1" -GroupId X -Labs Y
    ```
-
 
 ### Restart a deployment from a specific lab index
 
