@@ -70,7 +70,7 @@ resource MultipleSDDCDeployment 'Microsoft.Resources/deployments@2021-04-01' = [
       AssignJumpboxAsAVSContributor: { value: true }
       BootstrapJumpboxVM: { value: Bootstrap }
       BootstrapPath: { value: BootstrapPath }
-      BootstrapCommand: { value: 'powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber ${i} -NumberOfNestedLabs ${NumberOfNestedLabsInAVS}' }
+      BootstrapCommand: { value: 'powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber ${i} -NumberOfNestedLabs ${NumberOfNestedLabsInAVS} -automated' }
       JumpboxUsername: { value: JumpboxUser }
       JumpboxPassword: { value: '${JumpboxPasswordPrefix}${i}!' }
       JumpboxSku: { value: JumpboxSku }
