@@ -227,6 +227,7 @@ function Set-NestedLabPackage {
         }
     }
 
+    #Downloading Router OVA and Userdata file
     $UbuntuOvaPath = $ExtractionPath + "\Templates\" + $UbuntuOvaURL.Split('/')[-1]
     if (Test-Path $UbuntuOvaPath -PathType Leaf) {
         Write-Log "|--Set-NestedLabPackage - Ubuntu image already downloaded"
@@ -249,8 +250,9 @@ function Get-NestedLabConfigurationsFromManagedIdentity {
     # This script block grabs AVS credentials and store them in a variable that is required to run the nested lab deployment script.
     # It uses a Managed Identity of the Jumpbox VM that has Contributor access over AVS Private Cloud
 
-    [void] (az login --identity)
+    [void] (az config set auto-upgrade.prompt=no)
     [void] (az config set extension.use_dynamic_install=yes_without_prompt)
+    [void] (az login --identity)
 
     $resourceGroup = az vmware private-cloud list --query [0].resourceGroup
     $avsPrivateCloud = az vmware private-cloud list --query [0].name
