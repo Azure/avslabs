@@ -90,7 +90,7 @@ Write-Log "NSX-T Host: $nsxtHost"
 
 # AVS NSX-T Configurations
 $VMNetwork = "Group-${groupNumber}-${labNumber}-NestedLab"
-$VMNetworkCIDR = "10.${groupNumber}.${labNumber}.1/24"
+$VMNetworkCIDR = "10.${groupNumber}.${labNumber}.1/25"
 
 # Full Path to both the Nested ESXi VA and Extracted VCSA ISO
 $NestedESXiApplianceOVA = "${mypath}\Templates\Nested_ESXi7.0u3p_Appliance_Template_v1.ova"
