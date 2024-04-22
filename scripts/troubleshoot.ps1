@@ -5,14 +5,10 @@ $resourceGroup = az vmware private-cloud list --query [0].resourceGroup
 $avsPrivateCloud = az vmware private-cloud list --query [0].name
 
 $creds = az vmware private-cloud list-admin-credentials -c $avsPrivateCloud  -g $resourceGroup
-
-$credsString = [system.String]::Join(" ", $creds)
-$credsJson = ConvertFrom-Json $credsString
+$credsJson = $creds | ConvertFrom-Json
 
 $endpoints = az vmware private-cloud show -n $avsPrivateCloud  -g $resourceGroup --query "endpoints"
-
-$endpointsString = [system.String]::Join(" ", $endpoints)
-$endpointsJson = ConvertFrom-Json $endpointsString
+$endpointsJson = $endpoints | ConvertFrom-Json
 
 $nsxtURL = $endpointsJson.nsxtManager
 $vcsaURL = $endpointsJson.vcsa
