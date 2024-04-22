@@ -78,10 +78,13 @@ function Install-Applications {
     choco install 7zip -y
     choco install VMRC -y
 
-    #Optional
+    # Optional
     #choco install vscode -y
     #choco install microsoftazurestorageexplorer -y
     #choco install microsoft-windows-terminal -y
+
+    # Future Use
+    #choco upgrade all -y
 
     #refreshenv
 
