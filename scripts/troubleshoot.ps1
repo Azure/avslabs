@@ -1,5 +1,5 @@
 [void] (az login --identity)
-[void] (az config set extension.use_dynamic_install=yes_without_prompt)
+[void] (az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors)
 
 $resourceGroup = az vmware private-cloud list --query [0].resourceGroup
 $avsPrivateCloud = az vmware private-cloud list --query [0].name
