@@ -140,7 +140,7 @@ Yes, you can! 💡
    powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
    ```
 
-   5) **You can track progress** by keeping an eye on `bootstrap.log` and `bootstrap-nestedlabs.log` which will be created in **C:\Temp** directory.
+   5) **You can track progress** by keeping an eye on `bootstrap.log` and `bootstrap-nestedlabs.log` which will be created in **C:\Temp** directory. Note that the Jumpbox VM will be **rebooted** after `bootstrap.ps1` is done executing. A task will be created at Windows Task Scheduler. The task will be triggered at Windows startup, and it will execute `bootstrap-nestedlabs.ps1`. At the end of the execution that Task will be **disabled**. If you want to avoid using the scheduled task method, see [Deploy out of a ScheduledTask context](### Deploy out of a ScheduledTask context) section.
 
 ### What is the final result? 🤔
 
@@ -157,7 +157,7 @@ In case you cannot deploy a System Assigned Managed Identity on the Jumpbox VM u
       cd c:\Temp\
       ```
 
-   3) Create file `C:\Temp\nestedlabs.yaml` with the following content and replace the values with the ones matching your environment:
+   3) Create file `C:\Temp\nestedlabs.yml` with the following content and replace the values with the ones matching your environment:
 
       ```yaml
       AVSvCenter:
