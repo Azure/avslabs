@@ -112,11 +112,11 @@ function Test-AvailableDiskSpace {
     $freeSpaceGB = [math]::Round(($drive.Free / 1GB), 2)
 
     if ($freeSpaceGB -lt $requiredSpace) {
-        Write-Log "|--Test-AvailableDiskSpace - C drive has less than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
+        Write-Log "|--Test-AvailableDiskSpace - C drive has LESS than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
         return $false
     }
     else {
-        Write-Log "|--Test-AvailableDiskSpace - C drive has more than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
+        Write-Log "|--Test-AvailableDiskSpace - C drive has MORE than $requiredSpace GB of free space. Current free space: $freeSpaceGB GB"
         return $true
     }
 }
@@ -212,20 +212,21 @@ function Set-NestedLabPackage {
                 #Extracting Lab Package (zip) using 7zip
                 Write-Log "|--Set-NestedLabPackage - Extracting '$ZipPath'"
                 7z x $ZipPath -o*
+            } else {
+                Write-Log "|--Set-NestedLabPackage - Unable to extract; no enough disk space"
             }
-
-            #Downloading latest version of labdeploy.ps1
-            $NestedLabScriptPath = $ExtractionPath + "\" + $NestedLabScriptURL.Split('/')[-1]
-            if (Test-Path $NestedLabScriptPath -PathType Leaf) {
-                Remove-Item -Path $NestedLabScriptPath -Force -Confirm:$false -ErrorAction Continue
-            }
-
-            Start-BitsTransfer -Source $NestedLabScriptURL -Destination $ExtractionPath -Priority High
         }
         else {
             return $false
         }
     }
+
+    #Downloading latest version of labdeploy.ps1
+    $NestedLabScriptPath = $ExtractionPath + "\" + $NestedLabScriptURL.Split('/')[-1]
+    if (Test-Path $NestedLabScriptPath -PathType Leaf) {
+        Remove-Item -Path $NestedLabScriptPath -Force -Confirm:$false -ErrorAction Continue
+    }
+    Start-BitsTransfer -Source $NestedLabScriptURL -Destination $ExtractionPath -Priority High
 
     #Downloading Router OVA and Userdata file
     $UbuntuOvaPath = $ExtractionPath + "\Templates\" + $UbuntuOvaURL.Split('/')[-1]
