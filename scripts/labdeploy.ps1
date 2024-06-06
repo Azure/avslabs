@@ -709,6 +709,10 @@ if ($deployNestedESXiVMs) {
         $vm = Import-VApp -Source $NestedESXiApplianceOVA -OvfConfiguration $ovfconfig -Name $VMName -Location $resourcepool -VMHost $vmhost -Datastore $datastore -DiskStorageFormat thin -Force
 
         Write-Log "Adding vmnic2/vmnic3 to $VMNetwork ..."
+
+        #TODO: Specifying a distributed port group name as network name is no longer supported. Use the -Portgroup parameter.
+        #https://developer.broadcom.com/powercli/latest/vmware.vimautomation.core/commands/new-networkadapter/
+
         New-NetworkAdapter -VM $vm -Type Vmxnet3 -NetworkName $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
         New-NetworkAdapter -VM $vm -Type Vmxnet3 -NetworkName $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
 
@@ -975,7 +979,7 @@ if ($setupNewVC) {
         $vm = Import-VApp -Server $vc -Source $RouterOVA -OvfConfiguration $ovfconfig -Name $RouterVMHostname -VMHost $VMhost -Datastore $vcdatastore -DiskStorageFormat thin -Force
 
         Write-Log "Attaching Routing VM $RouterVMDisplayName to workload segment..."
-        New-NetworkAdapter -VM $vm -Portgroup $NewVCWorkloadDVPGName -StartConnected | Out-Null
+        New-NetworkAdapter -VM $vm -Portgroup $NewVCWorkloadDVPGName -StartConnected | Out-File -Append -LiteralPath $verboseLogFile
 
         Write-Log "Powering On $RouterVMDisplayName ..."
         $vm | Start-Vm | Out-Null # wait for tools
