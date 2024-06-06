@@ -140,7 +140,18 @@ Yes, you can! 💡
    powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
    ```
 
-   5) **You can track progress** by keeping an eye on `bootstrap.log` and `bootstrap-nestedlabs.log` which will be created in **C:\Temp** directory. Note that the Jumpbox VM will be **rebooted** after `bootstrap.ps1` is done executing. A task will be created at Windows Task Scheduler. The task will be triggered at Windows startup, and it will execute `bootstrap-nestedlabs.ps1`. At the end of the execution that Task will be **disabled**. If you want to avoid using the scheduled task method, see [Deploy out of a ScheduledTask context](### Deploy out of a ScheduledTask context) section.
+   5) **You can track progress** by keeping an eye on `bootstrap.log` and `bootstrap-nestedlabs.log` which will be created in **C:\Temp** directory.
+
+      <img src="images/bootstrap.png" alt="bootstrap-log" width="500" />
+
+      <img src="images/bootstrap-nestedlabs.png" alt="bootstrap-nestedlabs-log" width="500" />
+
+   6) Note that the Jumpbox VM will be **rebooted** after `bootstrap.ps1` is done executing. A task will be created at Windows Task Scheduler. The task will be triggered at Windows startup, and it will execute `bootstrap-nestedlabs.ps1`. At the end of the execution that Task will be **disabled**. If you want to avoid using the scheduled task method, see [Deploy out of a ScheduledTask context](#deploy-out-of-a-scheduledtask-context) section.
+
+      <img src="images/scheduled-task-before-execution.png" alt="scheduled-task-before-execution" width="400" />
+      
+      <img src="images/scheduled-task-after-execution.png" alt="scheduled-task-after-execution" width="400" />
+
 
 ### What is the final result? 🤔
 
