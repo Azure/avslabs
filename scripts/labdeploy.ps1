@@ -1037,7 +1037,17 @@ if ($setupNewVC) {
 $EndTime = Get-Date
 $duration = [math]::Round((New-TimeSpan -Start $StartTime -End $EndTime).TotalMinutes, 2)
 
+Write-Log " "
+Write-Log " "
 Write-Log "Nested SDDC Lab Deployment Complete!"
+Write-Log " "
+Write-Log "Nested Lab Info:"
+Write-Log " - Group Number is $group"
+Write-Log " - Lab Number is $lab"
+Write-Log " - vCenter IP: $VCSAIPAddress"
+Write-Log " - vCenter Admin: administrator@$VCSASSODomainName"
+Write-Log " "
+Write-Log "Execution Summary"
 Write-Log "-StartTime: $StartTime"
 Write-Log "-EndTime: $EndTime"
 Write-Log "-Duration: $duration minutes"
