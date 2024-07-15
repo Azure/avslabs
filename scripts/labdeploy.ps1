@@ -770,6 +770,11 @@ if ($deployVCSA) {
     $config.'new_vcsa'.network.prefix = $VCSAPrefix
     $config.'new_vcsa'.network.gateway = $VMGateway
     $config.'new_vcsa'.os.ntp_servers = $VMNTP
+    
+    #TODO: 
+    #add: $config.'new_vcsa'.os.time_tools_sync = $true 
+    #remove: ntp_servers entry
+
     $config.'new_vcsa'.network.system_name = $VCSAHostname
     $config.'new_vcsa'.os.password = $VCSARootPassword
     $config.'new_vcsa'.os.ssh_enable = $VCSASSHEnable
