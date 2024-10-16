@@ -161,14 +161,12 @@ Yes, you can! 💡
 
 In case you cannot deploy a System Assigned Managed Identity on the Jumpbox VM used to deploy resources, see the following process:
 
-   1) From Jumpbox VM, open Command Prompt (cmd.exe).
-   2) Change directory to C:\Temp by running:
+First, prerequisites:
+   1) Make sure you enable Internet (outbound) access on your AVS private cloud. [Steps are here](https://learn.microsoft.com/azure/azure-vmware/enable-managed-snat-for-workloads#set-up-outbound-internet-access-by-using-the-managed-snat-service)
 
-      ```powershell
-      cd c:\Temp\
-      ```
+Then, here are the steps you need to perform:
 
-   3) Create file `C:\Temp\nestedlabs.yml` with the following content and replace the values with the ones matching your environment:
+   1) At the Jumpbox VM, create file `C:\Temp\nestedlabs.yml` with the following content and replace the values with the ones matching your environment:
 
       ```yaml
       AVSvCenter:
@@ -181,9 +179,20 @@ In case you cannot deploy a System Assigned Managed Identity on the Jumpbox VM u
          Password: "passwordvalue" # #Enter the password for the cloudadmin
       ```
 
-   4) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example
+   2) Open Command Prompt (cmd.exe).
+   3) Change directory to C:\Temp by running:
 
-   5) Run this command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**.
+      ```powershell
+      cd c:\Temp\
+      ```
+
+   4) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example.
+
+     ```powershell
+     dir
+     ```
+
+   5) Run the following command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**.
 
 > [!NOTE]
 > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
