@@ -188,9 +188,9 @@ Then, here are the steps you need to perform:
 
    4) Validate that **bootstrap.ps1** exits and the file extension is **.ps1** not .txt for example.
 
-     ```powershell
-     dir
-     ```
+      ```powershell
+      dir
+      ```
 
    5) Run the following command, but first make sure you setup the appropriate **GroupNumber** (keep it 1 if you are not sure), and required number of nested lab environments: **NumberOfNestedLabs**.
 
