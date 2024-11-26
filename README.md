@@ -203,6 +203,18 @@ Then, here are the steps you need to perform:
 
 ## Troubleshoot
 
+### Known causes of issues
+1) Make sure you don't have overlapping IP addresses between nested lab environment 10.X.Y.0/16 and the following:
+   1) AVS Private Cloud **management IP CIDR block**
+   1) NSX **network segments IP CIDR blocks** for workloads running on AVS Private Cloud
+   1) Azure Virtual Network (or vWAN Hub) **IP CIDR block**
+1) AVS Private Cloud has Internet (outbound) access enabled. Usually through Managed SNAT if this is only for testing purposes.
+1) Make sure you are using the right credentials to access nested lab vCenter. Should be:
+   - Address: https://10.X.Y.2 , where X represent your team (group) number and Y is the instance number. For example, team/group 1, instance 2, will be: https://10.1.2.2
+   - Username: **administrator@avs.lab**
+   - Password: **MSFTavs1!**
+1) Worst case, try redeploying with different X, Y values. Before you proceed with further troubleshooting.
+
 ### How to delete nested labs?
 
 You may want to clean nested labs as they could have already consumed and you would like to start from scratch without redeploying AVS Private Cloud, or deploying the nested labs could have failed while you are deploying them, so you need to clean failed labs and start over. Here are the steps to do so:
