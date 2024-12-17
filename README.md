@@ -170,12 +170,12 @@ Then, here are the steps you need to perform:
 
       ```yaml
       AVSvCenter:
-         IP: "X.Y.Z.2" # Please enter the URL for AVS vCenter, do not include https:// or any slashes
+         IP: "X.Y.Z.2" # Please enter the IP for AVS vCenter, do not include https:// or any slashes
          Username: "cloudadmin@vsphere.local" # AVS vCenter Username, should be consistent
          Password: "passwordvalue" #Enter the password for the cloudadmin@vsphere.local
       AVSNSXT:
-         IP: "X.Y.Z.3" # Please enter the URL for AVS NSX-T Manager, do not include https:// or any slashes
-         Username: "cloudadmin" # NSX-T Username from the Azure portal
+         IP: "X.Y.Z.3" # Please enter the IP for AVS NSX Manager, do not include https:// or any slashes
+         Username: "cloudadmin" # NSX Username from the Azure portal
          Password: "passwordvalue" # #Enter the password for the cloudadmin
       ```
 
@@ -232,7 +232,7 @@ You may want to clean nested labs as they could have already consumed and you wo
 
    ![screenshot](images/cleanup-nestedlabs-rp.png)
 
-5) Go to NSX-T Portal -> Go to Segments.
+5) Go to NSX Management Console -> Go to Segments.
 6) Delete any segments created for the NestedLabs (i.e.: Group-1-1-**NestedLab**).
 
 ### Deploy out of a ScheduledTask context
