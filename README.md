@@ -136,6 +136,9 @@ Yes, you can! 💡
 > [!NOTE]
 > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
 
+> [!WARNING]
+> When specifying **GroupNumber**, be aware that the number will be used to generate the IP address space for the nest lab. If that conficts with AVS Private Cloud management IP CIDR block, or your vNET IP CIDR block, then choose a different GroupNumber. For example, if your AVS SDDC IP CIDR block is 10.1.8.0/22 and your vNET IP CIDR block is 10.2.0.0/16, then avoid using GroupNumber 1 or 2, instead use 3 or any other number (less than 255).
+
    ```powershell
    powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
    ```
