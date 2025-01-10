@@ -144,6 +144,9 @@ Yes, you can! 💡
 > [!WARNING]
 > When specifying **GroupNumber**, be aware that the number will be used to generate the IP address space for the nested lab. If it conficts with the IP CIDR block of AVS Private Cloud management or your vNET, then choose a different GroupNumber. For example, if your AVS SDDC IP CIDR block is 10.1.8.0/22 and your vNET IP CIDR block is 10.2.0.0/16, then avoid using GroupNumber 1 or 2, instead use 3 or any other number (<255).
 
+> [!CAUTION]
+> Make sure AVS Private Cloud has Internet outbound access (e.g. through managed SNAT)
+
    ```powershell
    powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
    ```
