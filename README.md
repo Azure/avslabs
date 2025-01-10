@@ -75,13 +75,18 @@ For a reference to *az* deployment command, see [this](https://learn.microsoft.c
 
 Yes, you can! 💡
 
-### What you will need?
+### What you will need (requirements)?
 
 > [!NOTE]
 > You can use Azure Cloud Shell to run the script examples in step #2 and #3.
 
 1) AVS Private Cloud deployed.
-2) A deployed Jumpbox VM that can reach out to AVS Private Cloud.
+
+1) **Internet access** (outbound) from AVS Private Cloud (SDDC). It could be through managed SNAT, or though more complicated setup (e.g. using Firewalls and NVA).
+   
+   Follow the documented instructions on [how to enable SNAT Internet outbound access from the Azure Portal](https://learn.microsoft.com/azure/azure-vmware/enable-managed-snat-for-workloads). Your should see something similar to the following screenshot. ![avssnatinternetaccess](images/internet-access-snat.png)
+
+1) A deployed Jumpbox VM that can reach out to AVS Private Cloud.
 
    ```powershell
    #Example
@@ -91,12 +96,12 @@ Yes, you can! 💡
    # $spID=$(az vm identity assign -g $jumpboxVMResourceGroup -n $jumpboxVMName --query systemAssignedIdentity --out tsv)
    ```
 
-3) System Assigned Managed Identity **enabled on the Jumpbox**.
+1) System Assigned Managed Identity **enabled on the Jumpbox**.
 
 > [!IMPORTANT]
 > Your account need to have Owner role over AVS Private Cloud, or at least User Access Administrator role in order to assign the Jumpbox Managed Identity permission over AVS Private Cloud.
 
-4) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
+1) **Assign the Jumpbox Managed Identity a Contributor Role over AVS Private Cloud**.
 
    ```powershell
    #Example:
@@ -114,7 +119,7 @@ Yes, you can! 💡
    }
    ```
 
-5) At Jumpbox VM, download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
+1) At Jumpbox VM, download [bootstrap.ps1](https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1) script and store it in **C:\Temp** directory.
    You can run the command below from Command Prompt to download **boostrap.ps1**:
 
    ```powershell
@@ -137,7 +142,7 @@ Yes, you can! 💡
 > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
 
 > [!WARNING]
-> When specifying **GroupNumber**, be aware that the number will be used to generate the IP address space for the nest lab. If that conficts with AVS Private Cloud management IP CIDR block, or your vNET IP CIDR block, then choose a different GroupNumber. For example, if your AVS SDDC IP CIDR block is 10.1.8.0/22 and your vNET IP CIDR block is 10.2.0.0/16, then avoid using GroupNumber 1 or 2, instead use 3 or any other number (less than 255).
+> When specifying **GroupNumber**, be aware that the number will be used to generate the IP address space for the nested lab. If it conficts with the IP CIDR block of AVS Private Cloud management or your vNET, then choose a different GroupNumber. For example, if your AVS SDDC IP CIDR block is 10.1.8.0/22 and your vNET IP CIDR block is 10.2.0.0/16, then avoid using GroupNumber 1 or 2, instead use 3 or any other number (<255).
 
    ```powershell
    powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
@@ -200,6 +205,9 @@ Then, here are the steps you need to perform:
 > [!NOTE]
 > If you are using **Azure Government**, please add **-IsAzureGovernment** switch parameter to the command
 
+> [!CAUTION]
+> Make sure AVS Private Cloud has Internet outbound access (e.g. through managed SNAT)
+
    ```powershell
    powershell.exe -ExecutionPolicy Unrestricted -File bootstrap.ps1 -GroupNumber 1 -NumberOfNestedLabs 1 -automated
    ```
@@ -239,6 +247,9 @@ You may want to clean nested labs as they could have already consumed and you wo
 6) Delete any segments created for the NestedLabs (i.e.: Group-1-1-**NestedLab**).
 
 ### Deploy out of a ScheduledTask context
+
+> [!CAUTION]
+> Make sure AVS Private Cloud has Internet outbound access (e.g. through managed SNAT)
 
 You can run `bootstrap.ps1` without parameter `-automated` to initiate a deployment that will not use a ScheduleTask nor reboot the Jumpbox.
 
