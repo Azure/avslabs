@@ -48,7 +48,7 @@ param DeployHCX bool = false
 @description('Decision to deploy SRM or not')
 param DeploySRM bool = false
 
-@description('The sku to use for the provate cloud, must have quota for this within the target region')
+@description('The sku to use for the private cloud, must have quota for this within the target region')
 @allowed([
   'AV36P'
   'AV36'
