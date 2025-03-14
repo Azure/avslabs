@@ -48,6 +48,17 @@ param DeployHCX bool = false
 @description('Decision to deploy SRM or not')
 param DeploySRM bool = false
 
+@description('The sku to use for the provate cloud, must have quota for this within the target region')
+@allowed([
+  'AV36P'
+  'AV36'
+  'AV36T'
+  'AV36PT'
+  'AV52'
+  'AV64'
+])
+param PrivateCloudSKU string = 'AV36P'
+
 @description('Nested Deployment')
 resource SingleSDDCDeployment 'Microsoft.Resources/deployments@2021-04-01' = {
   name: '${Prefix}-${AVSLabInstanceNumber}-LAB-Deployment-${uniqueString(Prefix, BootstrapPath)}'
@@ -81,6 +92,7 @@ resource SingleSDDCDeployment 'Microsoft.Resources/deployments@2021-04-01' = {
       DeployHCX: { value: DeployHCX }
       DeploySRM: { value: DeploySRM }
       VRServerCount: { value: 1 }
+      PrivateCloudSKU: { value: PrivateCloudSKU }
     }
   }
 }
