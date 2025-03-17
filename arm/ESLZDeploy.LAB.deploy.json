@@ -72,6 +72,14 @@
         "TodayDate": {
             "type": "string",
             "defaultValue": "[utcNow()]"
+        },
+        "PrivateCloudSKU": {
+            "type": "string",
+            "defaultValue": "AV36P",
+            "metadata": {
+                "description": "The sku to use for the private cloud, must have quota for this within the target region"
+            },
+            "allowedValues": [ "AV36", "AV36T","AV36P","AV36PT","AV52","AV64" ]
         }
     },
     "functions": [],
@@ -153,8 +161,10 @@
                     },
                     "VRServerCount": {
                         "value": 1
+                    },
+                    "PrivateCloudSKU": {
+                        "value": "[parameters('PrivateCloudSKU')]"
                     }
-
                 }
             }
         }
