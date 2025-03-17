@@ -36,6 +36,9 @@
         },
         "DeploySRM":{
             "value": false
+        },
+        "PrivateCloudSKU": {
+            "value": "AV36P"
         }
     }
 }
