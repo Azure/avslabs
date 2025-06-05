@@ -76,7 +76,7 @@ function Install-Applications {
     choco install azcopy10 -y
     choco install azure-cli -y
     choco install 7zip -y
-    choco install VMRC -y
+    #choco install VMRC -y
 
     # Optional
     #choco install vscode -y
