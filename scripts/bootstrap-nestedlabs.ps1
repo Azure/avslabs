@@ -177,7 +177,7 @@ function Set-NestedLabRequirement {
     Set-ExecutionPolicy Unrestricted
     
     # Install VMware PowerCLI
-    $result = (Get-Module -ListAvailable -Name VMware.PowerCLI) ? $true : (Install-Module VMware.PowerCLI -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
+    $result = (Get-Module -ListAvailable -Name VMware.PowerCLI) ? $true : (Install-Module VMware.PowerCLI -RequiredVersion 13.3.0.24145081 -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
     
     # Configure PowerCLI
     Set-PowerCLI
