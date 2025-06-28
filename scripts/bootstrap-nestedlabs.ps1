@@ -176,8 +176,8 @@ function Set-NestedLabRequirement {
     # Change PowerShell ExecutionPolicy
     Set-ExecutionPolicy Unrestricted
     
-    # Install VMware PowerCLI
-    $result = (Get-Module -ListAvailable -Name VMware.PowerCLI) ? $true : (Install-Module VMware.PowerCLI -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
+    # Install VCF PowerCLI
+    $result = (Get-Module -ListAvailable -Name VCF.PowerCLI) ? $true : (Install-Module VCF.PowerCLI -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
     
     # Configure PowerCLI
     Set-PowerCLI
@@ -190,7 +190,7 @@ function Set-NestedLabRequirement {
     $result = (Get-Module -ListAvailable -Name powershell-yaml) ? $true : (Install-Module powershell-yaml -Scope AllUsers -Force -SkipPublisherCheck -AllowClobber -ErrorAction Ignore)
 
     # Extra Verification 
-    $result = (Get-Module -ListAvailable -Name VMware.PowerCLI) ? $true : $false
+    $result = (Get-Module -ListAvailable -Name VCF.PowerCLI) ? $true : $false
 
     return $result
 }
@@ -416,7 +416,7 @@ if ($isMAG){
     az cloud set --name AzureUsGovernment
 }
 
-Write-Log "Setting basic requirements for labdeploy.ps1 script (i.e.: installing PowerShell modules: VMware.PowerCLI)"
+Write-Log "Setting basic requirements for labdeploy.ps1 script (i.e.: installing PowerShell modules: VCF.PowerCLI)"
 if (Set-NestedLabRequirement) {
     Write-Log "Extracting nested labs Zip package"
     if (Set-NestedLabPackage) {

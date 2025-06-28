@@ -81,14 +81,14 @@ $VIPassword = $config.AVSvCenter.Password
 
 Write-Log "vCenter Host: $VIServer"
 
-# NSX-T Server Variables
+# NSX Server Variables
 $nsxtHost = $config.AVSNSXT.IP
 $nsxtUser = $config.AVSNSXT.Username
 $nsxtPass = $config.AVSNSXT.Password
 
-Write-Log "NSX-T Host: $nsxtHost"
+Write-Log "NSX Host: $nsxtHost"
 
-# AVS NSX-T Configurations
+# AVS NSX Configurations
 $VMNetwork = "Group-${groupNumber}-${labNumber}-NestedLab"
 $VMNetworkCIDR = "10.${groupNumber}.${labNumber}.1/24"
 
@@ -389,7 +389,7 @@ if ($confirmDeployment) {
 
 # Import the PowerCLI module
 Write-Log "Importing PowerCLI PowerShell Module"
-Import-Module VMware.PowerCLI
+Import-Module VCF.PowerCLI
 Write-Log "Imported PowerCLI PowerShell Module Successfully"
 
 if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
@@ -404,10 +404,10 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
         exit
     }
 
-    # Connecting to NSX-T Manager
-    Write-Log "Connecting to NSX-T Server $nsxtHost ..."
+    # Connecting to NSX Manager
+    Write-Log "Connecting to NSX Server $nsxtHost ..."
     $nsxtConnection = Connect-NsxtServer -Server ${nsxtHost} -User ${nsxtUser} -Password ${nsxtPass}
-    Write-Log "Connected to NSX-T Server"
+    Write-Log "Connected to NSX Server"
 
     # Create Resource Pool
     Write-Log "Creating $VMResourcePool if it does not exist ......"
@@ -418,7 +418,7 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     }
 
     # Get Transport Zone ID: Transport Zone Overlay = $tzoneOverlay, Transport Zone Overlay ID = $tzoneOverlayID, tzPath
-    Write-Log "Getting Transport Zone Overlay ID from NSX-T"
+    Write-Log "Getting Transport Zone Overlay ID from NSX"
 
     $tzSvc = Get-NsxtService -Name com.vmware.nsx.transport_zones
     $tzones = $tzSvc.list()
@@ -443,7 +443,7 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     #$tzPath = ($transportZonePolicyService.list("default", "default").results | where { $_.display_name -like "TNT**-OVERLAY-TZ" }).path
 
     # Get Default T1 Gateway
-    Write-Log "Getting NSX-T Default T1 Gateway"
+    Write-Log "Getting NSX Default T1 Gateway"
 
     $t1svc = Get-NsxtService -Name com.vmware.nsx.logical_routers
     $t1list = $t1Svc.list()
@@ -581,7 +581,7 @@ if ( $deployNFSVM -or $deployNestedESXiVMs -or $deployVCSA) {
     }
 
     ## Create Network Segment for Nested Lab
-    Write-Log "Creating Network in AVS NSX-T for Nested Lab ${labNumber}"
+    Write-Log "Creating Network in AVS NSX for Nested Lab ${labNumber}"
 
     $segmentName = $VMNetwork
     $gatewayaddress = $VMNetworkCIDR
@@ -713,8 +713,8 @@ if ($deployNestedESXiVMs) {
         #TODO: Specifying a distributed port group name as network name is no longer supported. Use the -Portgroup parameter.
         #https://developer.broadcom.com/powercli/latest/vmware.vimautomation.core/commands/new-networkadapter/
 
-        New-NetworkAdapter -VM $vm -Type Vmxnet3 -NetworkName $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
-        New-NetworkAdapter -VM $vm -Type Vmxnet3 -NetworkName $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
+        New-NetworkAdapter -VM $vm -Type Vmxnet3 -Portgroup $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
+        New-NetworkAdapter -VM $vm -Type Vmxnet3 -Portgroup $VMNetwork -StartConnected -confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
 
         Write-Log "Updating vCPU Count to $NestedESXivCPU & vMEM to $NestedESXivMEM GB ..."
         Set-VM -Server $viConnection -VM $vm -NumCpu $NestedESXivCPU -MemoryGB $NestedESXivMEM -Confirm:$false | Out-File -Append -LiteralPath $verboseLogFile
@@ -990,12 +990,12 @@ if ($setupNewVC) {
         $vm | Start-Vm | Out-Null # wait for tools
 
         # Create static route on NSX segment to reach VM segment
-        # Connecting to NSX-T Manager
-        Write-Log "Connecting to NSX-T Server $nsxtHost ..."
+        # Connecting to NSX Manager
+        Write-Log "Connecting to NSX Server $nsxtHost ..."
         $nsxtConnection = Connect-NsxServer -Server ${nsxtHost} -User ${nsxtUser} -Password ${nsxtPass}
-        Write-Log "Connected to NSX-T Server"
+        Write-Log "Connected to NSX Server"
         # Get Default T1 Gateway
-        Write-Log "Getting NSX-T Default T1 Gateway"
+        Write-Log "Getting NSX Default T1 Gateway"
         $t1result = (Invoke-ListTier1 -Server $nsxtConnection).results | Where-Object { $_.DisplayName -like 'TNT**-T1' }
         $t1Name = $t1result.DisplayName
 
@@ -1035,7 +1035,7 @@ if ($setupNewVC) {
 
         Write-Log "Disconnecting from NSX ..."
         if ($nsxtConnection) {
-            Disconnect-NsxServer -Connection $nsxtConnection #-ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+            Disconnect-NsxServer -Server $nsxtHost -Force -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
         }
     }
 
@@ -1055,6 +1055,7 @@ Write-Log " - Group Number is $group"
 Write-Log " - Lab Number is $lab"
 Write-Log " - vCenter IP: $VCSAIPAddress"
 Write-Log " - vCenter Admin: administrator@$VCSASSODomainName"
+Write-Log " - vCenter Password: $defaultPassword"
 Write-Log " "
 Write-Log "Execution Summary"
 Write-Log "-StartTime: $StartTime"
