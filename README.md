@@ -126,6 +126,9 @@ Yes, you can! 💡
    powershell.exe -ExecutionPolicy Unrestricted -Command "New-Item -Path C:\ -Name Temp -ItemType Directory -ErrorAction Ignore; Invoke-WebRequest -Uri https://raw.githubusercontent.com/Azure/avslabs/main/scripts/bootstrap.ps1 -OutFile C:\Temp\bootstrap.ps1; Unblock-File -Path C:\Temp\bootstrap.ps1"
    ```
 
+1) At Jumpbox VM, you may need to install [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) if it is not installed already.
+
+
 ### How to execute? 🧑🏻‍💻
 
    1) From Jumpbox VM, open Command Prompt (cmd.exe).
