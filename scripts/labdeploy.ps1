@@ -746,8 +746,40 @@ if ($deployNFSVM) {
     $vm | Start-Vm -RunAsync | Out-Null
 }
 
+
+
 if ($deployVCSA) {
     if ($IsWindows) {
+        # Ensure Microsoft Visual C++ Redistributable (required by ovftool) is installed
+        $vcredistExe = Join-Path $VCSAInstallerPath '\vcsa\ovftool\win32\vcredist\vc_redist.x86.exe'
+        //avs-embedded-labs-auto\Templates\VCSA7-Install\vcsa\ovftool\win32\vcredist
+
+        if (Test-Path $vcredistExe) {
+            Write-Log "Installing (or validating) Microsoft Visual C++ Redistributable ..."
+            try {
+                $proc = Start-Process -FilePath $vcredistExe -ArgumentList '/install','/quiet','/norestart' -Wait -PassThru -ErrorAction Stop
+                $exitCode = $proc.ExitCode
+                # Common acceptable exit codes:
+                # 0 = Success, 1638 = Another version already installed, 3010 = Success (reboot required)
+                if ($exitCode -in 0,1638,3010) {
+                    switch ($exitCode) {
+                        0 { Write-Log "Visual C++ Redistributable installed successfully." }
+                        1638 { Write-Log "Visual C++ Redistributable already installed (exit code 1638)." }
+                        3010 { Write-Log "Visual C++ Redistributable installed (reboot flagged but continuing - exit code 3010)." }
+                    }
+                }
+                else {
+                    Write-Log "Visual C++ Redistributable installer returned exit code $exitCode (continuing anyway)."
+                }
+            }
+            catch {
+                Write-Log "Visual C++ Redistributable installation failed but will continue. Error: $_"
+            }
+        }
+        else {
+            Write-Log "vc_redist.x86.exe not found at $vcredistExe (continuing without install)."
+        }
+
         $config = (Get-Content -Raw "$($VCSAInstallerPath)\vcsa-cli-installer\templates\install\embedded_vCSA_on_VC.json") | ConvertFrom-Json
     }
     else {
