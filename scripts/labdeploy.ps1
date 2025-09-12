@@ -842,7 +842,7 @@ if ($deployVCSA) {
         Write-Log "Creating VCSA JSON Configuration file for deployment ..."
         $config | ConvertTo-Json -WarningAction SilentlyContinue | Set-Content -Path "/tmp/jsontemplate.json"
 
-        Write-Log "Deploying the VCSA ..."
+        Write-Log "Deploying the VCSA. This may take about 20 minutes. Please be patient ..."
         Invoke-Expression "$($VCSAInstallerPath)/vcsa-cli-installer/lin64/vcsa-deploy install --no-ssl-certificate-verification --accept-eula --acknowledge-ceip /tmp/jsontemplate.json" | Out-File -Append -LiteralPath $verboseLogFile
     }
 }
