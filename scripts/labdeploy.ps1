@@ -749,10 +749,15 @@ if ($deployNFSVM) {
 
 
 if ($deployVCSA) {
+
+    Write-Log "Preparing VCSA Deployment ..."
+    
     if ($IsWindows) {
-        # Ensure Microsoft Visual C++ Redistributable (required by ovftool) is installed
+
+        Write-Log "Detected Windows OS, proceeding with Windows specific steps ..."
+
+        # Ensure Microsoft Visual C++ Redistributable (required by ovftool) is installed. Path: avs-embedded-labs-auto\Templates\VCSA7-Install\vcsa\ovftool\win32\vcredist
         $vcredistExe = Join-Path $VCSAInstallerPath '\vcsa\ovftool\win32\vcredist\vc_redist.x86.exe'
-        //avs-embedded-labs-auto\Templates\VCSA7-Install\vcsa\ovftool\win32\vcredist
 
         if (Test-Path $vcredistExe) {
             Write-Log "Installing (or validating) Microsoft Visual C++ Redistributable ..."
